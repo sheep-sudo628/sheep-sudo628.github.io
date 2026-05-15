@@ -3,35 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>反应力测试小游戏</title>
+    <title>反应力测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #f5f5f5;
+            gap: 30px;
+        }
+        #testArea {
+            width: 300px;
+            height: 200px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: #333;
+        }
+        #testBtn {
+            padding: 15px 40px;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        #testBtn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #result {
+            font-size: 22px;
+            font-weight: bold;
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div id="testArea">准备开始测试</div>
+    <button id="testBtn">点击开始测试</button>
+    <div id="result">反应时间：0 ms</div>
+
+    <script>
+        const testArea = document.getElementById('testArea');
+        const testBtn = document.getElementById('testBtn');
+        const result = document.getElementById('result');
+
+        // 核心变量
+        let isWaiting = false;
+        let startTime = 0;
+        let timer;
+        let testCount = 0; // 测试次数
+        const luckyNums = [520, 521, 1314]; // 彩蛋触发数字
+
+        // 单按钮逻辑
+        testBtn.addEventListener('click', () => {
+            if (!isWaiting) startTest();
+            else calculateTime();
+        });
+
+        // 开始测试
+        function startTest() {
+            isWaiting = true;
+            testBtn.disabled = true;
+            testArea.style.background = '#e0e0e0';
+            testArea.textContent = '等待变红...';
+            result.textContent = '反应时间：0 ms';
+
+            // 随机1-5秒变红
+            const randomDelay = Math.floor(Math.random() * 4000) + 1000;
+            timer = setTimeout(() => {
+                testArea.style.background = '#ff0000';
+                testArea.textContent = '立刻点击按钮！';
+                testBtn.disabled = false;
+                startTime = Date.now();
+            }, randomDelay);
+        }
+
+        // 计算反应时间 + 彩蛋判断
+        function calculateTime() {
+            isWaiting = false;
+            const reactionTime = Date.now() - startTime;
+            result.textContent = `反应时间：${reactionTime} ms`;
+            testCount++;
+
+            // ===================== 彩蛋触发逻辑 =====================
+            // 触发幸运数字 或 测试3次 → 跳转爱心页面
+            if (luckyNums.includes(reactionTime) || testCount === 3) {
+                setTimeout(showLovePage, 600);
+                return;
+            }
+            // ======================================================
+
+            // 正常重置
+            testArea.style.background = '#e0e0e0';
+            testArea.textContent = '测试完成！再次点击重新开始';
+            testBtn.textContent = '重新测试';
+        }
+
+        // 跳转到你指定的花瓣爱心情话页面
+        function showLovePage() {
+            document.write(`<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>花瓣爱心+情话弹窗特效</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
-        /* 页面背景：渐变粉色 */
         body {
             min-height: 100vh;
             background: linear-gradient(135deg, #ffd6e0, #ffb6c1, #f8c8dc);
-            overflow: hidden; /* 隐藏超出屏幕的花瓣 */
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
         }
-
-        /* 爱心样式：纯CSS绘制爱心 */
         .heart {
             width: 150px;
             height: 150px;
             position: relative;
-            /* 爱心跳动动画 */
             animation: heartBeat 1.2s ease-in-out infinite;
             z-index: 10;
         }
-
-        /* 爱心核心形状 */
         .heart::before,
         .heart::after {
             content: '';
@@ -41,39 +151,30 @@
             border-radius: 50px 50px 0 0;
             position: absolute;
         }
-
         .heart::before {
             left: 75px;
             transform: rotate(-45deg);
             transform-origin: 0 100%;
         }
-
         .heart::after {
             left: 0;
             transform: rotate(45deg);
             transform-origin: 100% 100%;
         }
-
-        /* 爱心跳动动画 */
         @keyframes heartBeat {
             0% { transform: scale(1); }
             50% { transform: scale(1.15); }
             100% { transform: scale(1); }
         }
-
-        /* 花瓣基础样式 */
         .petal {
             position: absolute;
             top: -50px;
             background: #ffc0cb;
             border-radius: 50%;
             opacity: 0.8;
-            /* 花瓣飘落+旋转动画 */
             animation: petalFall linear infinite;
             z-index: 5;
         }
-
-        /* 花瓣飘落动画 */
         @keyframes petalFall {
             0% {
                 transform: translateY(0) rotate(0deg);
@@ -84,8 +185,6 @@
                 opacity: 0;
             }
         }
-
-        /********** 新增：情话弹窗样式 **********/
         .love-popup {
             position: absolute;
             padding: 12px 20px;
@@ -96,12 +195,10 @@
             font-weight: bold;
             text-align: center;
             box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
-            z-index: 999; /* 确保弹窗在最上层 */
-            animation: popupFade 0.3s ease; /* 弹出动画 */
+            z-index: 999;
+            animation: popupFade 0.3s ease;
             white-space: nowrap;
         }
-
-        /* 弹窗淡入动画 */
         @keyframes popupFade {
             0% { opacity: 0; transform: scale(0.5); }
             100% { opacity: 1; transform: scale(1); }
@@ -109,82 +206,57 @@
     </style>
 </head>
 <body>
-    <!-- 爱心元素 -->
     <div class="heart"></div>
-
     <script>
-        // 1. 生成随机花瓣（原有功能）
         function createPetals() {
             const petalCount = 200;
             const body = document.body;
-
             for (let i = 0; i < petalCount; i++) {
                 const petal = document.createElement('div');
                 petal.classList.add('petal');
-
                 const size = Math.random() * 15 + 10;
-                petal.style.width = `${size}px`;
-                petal.style.height = `${size}px`;
-                petal.style.left = `${Math.random() * 100}vw`;
-
+                petal.style.width = size + 'px';
+                petal.style.height = size + 'px';
+                petal.style.left = Math.random() * 100 + 'vw';
                 const duration = Math.random() * 7 + 5;
-                petal.style.animationDuration = `${duration}s`;
-
+                petal.style.animationDuration = duration + 's';
                 const colors = ['#ffc0cb', '#ffd1dc', '#f8c8dc', '#ffb6c1', '#fcc5e2'];
                 petal.style.background = colors[Math.floor(Math.random() * colors.length)];
-                petal.style.animationDelay = `${Math.random() * 5}s`;
-
+                petal.style.animationDelay = Math.random() * 5 + 's';
                 body.appendChild(petal);
             }
         }
-
-        // 2. 新增：随机情话弹窗功能
         function createLovePopup() {
-            // 情话文案（可自行增删）
             const loveTexts = ['我想你', '我爱你', '我喜欢你', '好想你', '超爱你', '喜欢你呀', '满心是你','我只喜欢你'];
-            // 弹窗随机颜色
             const popupColors = ['#ff6b9d', '#ff4d6d', '#f883c9', '#ff9eb8', '#ff7ba8'];
-            
             const popup = document.createElement('div');
             popup.classList.add('love-popup');
-            // 随机情话
             popup.innerText = loveTexts[Math.floor(Math.random() * loveTexts.length)];
-            // 随机背景色
             popup.style.background = popupColors[Math.floor(Math.random() * popupColors.length)];
-            
-            // 随机位置（屏幕内）
             const maxLeft = window.innerWidth - 120;
             const maxTop = window.innerHeight - 60;
             popup.style.left = Math.random() * maxLeft + 'px';
             popup.style.top = Math.random() * maxTop + 'px';
-
-            // 添加到页面
             document.body.appendChild(popup);
-
-            // 3秒后自动关闭弹窗
-            setTimeout(() => {
-                popup.remove();
-            }, 2000);
+            setTimeout(() => popup.remove(), 2000);
         }
-
-        // 3. 批量生成弹窗（一次性生成50个，可修改数量）
         function batchCreatePopups() {
-            // 生成大量弹窗，间隔100毫秒一个，避免重叠
             let count = 0;
             const timer = setInterval(() => {
                 createLovePopup();
                 count++;
-                if (count >= 400) {
-                    clearInterval(timer);
-                }
+                if (count >= 400) clearInterval(timer);
             }, 50);
         }
-
-        // 页面加载完成后执行
         window.onload = () => {
-            createPetals();       // 生成花瓣
-            batchCreatePopups();  // 生成情话弹窗
+            createPetals();
+            batchCreatePopups();
         };
+    <\/script>
+</body>
+</html>`);
+            document.close();
+        }
     </script>
 </body>
 </html>
