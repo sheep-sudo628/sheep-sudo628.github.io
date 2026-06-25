@@ -2,259 +2,530 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>反应力测试</title>
+    <title>数据仓库与数据挖掘考试题库（自测计分）</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-        body {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: #f5f5f5;
-            gap: 30px;
-        }
-        #testArea {
-            width: 300px;
-            max-width: 90vw;
-            height: 200px;
-            background: #e0e0e0;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 20px;
-            color: #333;
-        }
-        #testBtn {
-            padding: 15px 40px;
-            font-size: 18px;
-            border: none;
-            border-radius: 8px;
-            background: #007bff;
-            color: white;
-            cursor: pointer;
-        }
-        #testBtn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        #result {
-            font-size: 22px;
-            font-weight: bold;
-            color: #dc3545;
-        }
+        *{box-sizing: border-box;margin:0;padding:0;font-family:"Microsoft Yahei",sans-serif;}
+        body{background:#f5f7fa;padding:30px;max-width:1200px;margin:0 auto;}
+        h1{text-align:center;color:#2c3e50;margin-bottom:10px;border-bottom:2px solid #3498db;padding-bottom:10px;}
+        .score-tip{background:#dceeff;padding:12px;border-radius:8px;margin-bottom:20px;line-height:1.8;}
+        .paper-wrap{background:#fff;border-radius:10px;padding:20px;margin-bottom:25px;box-shadow:0 2px 12px #e0e5ec;}
+        h2{color:#34495e;margin-bottom:18px;border-left:5px solid #3498db;padding-left:10px;margin-top:30px;}
+        h2:first-of-type{margin-top:0;}
+        h3{color:#444;margin:15px 0 10px;font-size:18px;}
+        .radio-item{margin:8px 0 8px 20px;line-height:1.7;}
+        .answer-wrap{margin:10px 0;}
+        .answer{background:#e8f4fd;padding:10px;border-radius:6px;color:#2980b9;white-space:pre-line;line-height:1.8;display:none;}
+        .user-ans-box{margin:8px 0;}
+        textarea{width:100%;min-height:80px;padding:8px;border:1px solid #ccc;border-radius:4px;resize:vertical;}
+        .show-ans-btn{padding:4px 10px;background:#95c8f0;border:none;border-radius:4px;cursor:pointer;margin-bottom:6px;}
+        .q-block{margin-bottom:22px;border-bottom:1px dashed #eee;padding-bottom:15px;}
+        .q-block:last-child{border-bottom:none;}
+        .result-box{margin:30px 0 10px;text-align:center;}
+        .btn-box{text-align:center;margin-top:10px;gap:15px;display:flex;justify-content:center;flex-wrap:wrap;}
+        button{padding:12px 30px;background:#3498db;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;transition:0.2s;}
+        button:hover{background:#217dbb;}
+        #calcScoreBtn{background:#27ae60;}
+        #calcScoreBtn:hover{background:#1e8449;}
+        .table-box{margin:12px 0;overflow-x:auto;}
+        table{width:100%;border-collapse:collapse;}
+        td,th{border:1px solid #ddd;padding:10px;text-align:center;}
+        th{background:#f0f7ff;}
+        .right{color:#27ae60;font-weight:bold;}
+        .wrong{color:#e74c3c;font-weight:bold;}
+        .total-score{font-size:20px;text-align:center;margin:20px 0;font-weight:bold;}
     </style>
 </head>
 <body>
-    <div id="testArea">准备开始测试</div>
-    <button id="testBtn">点击开始测试</button>
-    <div id="result">反应时间：0 ms</div>
+    <h1>数据仓库与数据挖掘期末考试题库（自测计分版）</h1>
+    <div class="score-tip">
+        试卷分值说明：<br>
+        1. 单项选择题：每题1分，共20分<br>
+        2. 简答题：每题8分，共40分<br>
+        3. 计算题：每题10分，共20分<br>
+        4. 综述题：每题10分，共10分<br>
+        满分100分，做完题目后点击底部按钮操作
+    </div>
+    <div class="paper-wrap" id="paper-container"></div>
+
+    <!-- 判分结果区域移到按钮上方 -->
+    <div class="result-box total-score" id="scoreShow"></div>
+
+    <!-- 按钮全部放到页面最底部 -->
+    <div class="btn-box">
+        <button onclick="randomPaper()">随机刷新整套试卷</button>
+        <button id="calcScoreBtn" onclick="calcTotalScore()">交卷判分，查看总分</button>
+    </div>
 
     <script>
-        const testArea = document.getElementById('testArea');
-        const testBtn = document.getElementById('testBtn');
-        const result = document.getElementById('result');
-
-        let isWaiting = false;
-        let startTime = 0;
-        let timer;
-        let testCount = 0;
-        const luckyNums = [520, 521, 1314];
-
-        testBtn.addEventListener('click', () => {
-            if (!isWaiting) startTest();
-            else calculateTime();
-        });
-
-        function startTest() {
-            isWaiting = true;
-            testBtn.disabled = true;
-            testArea.style.background = '#e0e0e0';
-            testArea.textContent = '等待变红...';
-            result.textContent = '反应时间：0 ms';
-
-            const randomDelay = Math.floor(Math.random() * 4000) + 1000;
-            timer = setTimeout(() => {
-                testArea.style.background = '#ff0000';
-                testArea.textContent = '立刻点击按钮！';
-                testBtn.disabled = false;
-                startTime = Date.now();
-            }, randomDelay);
-        }
-
-        function calculateTime() {
-            isWaiting = false;
-            const reactionTime = Date.now() - startTime;
-            result.textContent = `反应时间：${reactionTime} ms`;
-            testCount++;
-
-            if (luckyNums.includes(reactionTime) || testCount === 3) {
-                setTimeout(showLovePage, 600);
-                return;
+        // 完整题库：计算题6道、综述题5道、单选20道充足
+        const questionBank = [
+            {
+                module:"模块1 数据挖掘、数据仓库、OLAP、BI综合基础",
+                single:[
+                    {
+                        q:"下列不属于数据挖掘特点的是（）",
+                        opts:["A. 可处理海量数据","B. 挖掘规则动态变化","C. 必须人工设定固定模式","D. 挖掘结果可理解、可运用"],
+                        ans:"C",
+                        score:1
+                    },
+                    {
+                        q:"BI完整构成公式为（）",
+                        opts:["A. BI=数据仓库+数据挖掘","B. BI=数据仓库+OLAP+数据挖掘","C. BI=OLAP+数据挖掘","D. BI=数据仓库+元数据"],
+                        ans:"B",
+                        score:1
+                    },
+                    {
+                        q:"关于OLAP与数据挖掘描述正确的是（）",
+                        opts:["A. OLAP属于归纳推理、发现未知模式","B. 数据挖掘属于验证式分析","C. OLAP面向用户已知维度做交互式查询","D. 数据挖掘运算速度更快"],
+                        ans:"C",
+                        score:1
+                    },
+                    {
+                        q:"数据仓库与数据集市对比，说法错误的是（）",
+                        opts:["A. 数据仓库为所有集市提供底层数据源","B. 数据集市开发周期更短、落地速度快","C. 数据仓库数据粒度更粗","D. 数据集市规模更小、面向部门业务"],
+                        ans:"C",
+                        score:1
+                    },
+                    {
+                        q:"OLAP五大核心特征中，最关键性能指标是（）",
+                        opts:["A. 多维性","B. 快速性","C. 交互性","D. 共享性"],
+                        ans:"B",
+                        score:1
+                    },
+                    {
+                        q:"数据仓库的数据具有什么时间特性（）",
+                        opts:["A. 实时动态更新","B. 历史快照、时变","C. 仅存储当日数据","D. 可随意删除历史数据"],
+                        ans:"B",
+                        score:1
+                    },
+                    {
+                        q:"下列属于描述性数据挖掘任务的是（）",
+                        opts:["A. 分类预测","B. 聚类分析","C. 回归预测","D. 时序预测"],
+                        ans:"B",
+                        score:1
+                    },
+                    {
+                        q:"数据仓库四层架构最底层是（）",
+                        opts:["A. 数据集市层","B. 数据仓库层","C. 数据源层","D. ODS操作数据层"],
+                        ans:"C",
+                        score:1
+                    },
+                    {
+                        q:"关联规则挖掘经典算法是（）",
+                        opts:["A. K-Means","B. Apriori","C. 朴素贝叶斯","D. DBSCAN"],
+                        ans:"B",
+                        score:1
+                    },
+                    {
+                        q:"退化维表的含义是（）",
+                        opts:["A. 没有独立维表，字段直接放入事实表","B. 维度多层拆分","C. 维度存在多层父子关系","D. 维度数据持续退化失效"],
+                        ans:"A",
+                        score:1
+                    }
+                ],
+                short:[
+                    {
+                        q:"简述数据挖掘五大特点",
+                        ans:"①能够处理大规模海量数据；②自动挖掘决策者感兴趣的隐藏规则、模式；③挖掘得到的知识可接受、可理解、可落地运用；④挖掘规则依托统计规律生成；⑤挖掘规则具备动态性，随数据更新发生变化。",
+                        score:8
+                    },
+                    {
+                        q:"简述预测建模四步标准流程",
+                        ans:"①收集业务历史数据集；②对原始数据进行清洗、预处理；③选择适配业务场景的算法搭建模型；④完成模型评估、调优优化。",
+                        score:8
+                    },
+                    {
+                        q:"简述数据仓库与数据集市三点核心区别",
+                        ans:"①层级关系：数据仓库作为底层统一数据源，为全部数据集市提供数据；②开发周期：数据集市开发周期短、上线快；数据仓库建设周期长、实施复杂；③数据粒度：数据仓库存储数据粒度更精细，数据集市粒度更粗。",
+                        score:8
+                    },
+                    {
+                        q:"简述元数据的两大作用与管理内容",
+                        ans:"作用：①构建数据集必备，辅助用户读懂、理解仓库数据；②保障整体数据质量，支撑业务需求迭代变更。\n管理内容：采集并存储元数据、搭建元数据集、完成元数据标准化；持续同步更新元数据，解决数据更新冲突。",
+                        score:8
+                    },
+                    {
+                        q:"简述OLAP定义、核心作用与五大特征",
+                        ans:"定义：一种多维交互式分析软件技术，支持分析人员从多维度快速存取数据，实现深度业务分析，核心是联机多维快速查询处理。\n五大特征：多维性（最直观特征）、交互性、快速性（最关键性能指标）、共享性、信息性。",
+                        score:8
+                    },
+                    {
+                        q:"写出BI体系公式，并分别说明三层组件分工",
+                        ans:"公式：BI = 数据仓库 + OLAP + 数据挖掘\n分工：①数据仓库：整合存储企业全量历史多源数据；②OLAP：验证式多维交互式查询，分析已知业务维度；③数据挖掘：归纳式自动挖掘隐藏数据规律，实现业务预测分析。",
+                        score:8
+                    }
+                ],
+                calc:[
+                    {
+                        q:"给定支持度与置信度计算公式，设事务集共100条，包含A的事务40条，同时包含A、B的事务12条，计算{A→B}的支持度与置信度",
+                        ans:"1.支持度=同时包含A、B事务数/总事务=12/100=12%\n2.置信度=同时包含A、B事务数/包含A事务=12/40=30%",
+                        score:10
+                    },
+                    {
+                        q:"给定数据集样本距离，样本A(2,4)、样本B(6,7)，计算欧式距离",
+                        ans:"欧式距离公式：dist=√[(x1-x2)²+(y1-y2)²]\n代入：√[(2-6)²+(4-7)²]=√(16+9)=√25=5",
+                        score:10
+                    },
+                    {
+                        q:"事务数据库共50条记录，商品C出现20次，C和D同时出现8次，求关联规则C→D的支持度、置信度",
+                        ans:"支持度=8/50=16%；置信度=8/20=40%",
+                        score:10
+                    },
+                    {
+                        q:"两个样本(1,3,5)、(4,7,2)，计算三维欧式距离",
+                        ans:"dist=√[(1-4)²+(3-7)²+(5-2)²]=√(9+16+9)=√34≈5.83",
+                        score:10
+                    },
+                    {
+                        q:"数据集共80条，项集{E,F}出现16次，求支持度；项E出现32次，求E→F置信度",
+                        ans:"支持度=16/80=20%；置信度=16/32=50%",
+                        score:10
+                    },
+                    {
+                        q:"样本1(0,0)，样本2(3,4)，曼哈顿距离与欧式距离分别是多少",
+                        ans:"曼哈顿距离=|0-3|+|0-4|=7；欧式距离=√(9+16)=5",
+                        score:10
+                    }
+                ],
+                review:[
+                    {
+                        q:"综合阐述数据仓库、OLAP、数据挖掘三者的联系与整体商业应用价值",
+                        ans:"1.联系：数据仓库负责统一存储企业历史多源数据，作为底层数据源；OLAP基于仓库数据做多维交互式验证分析；数据挖掘依托仓库海量数据自动挖掘隐藏规律，三者共同构成BI完整体系。\n2.商业价值：统一整合企业分散业务数据，消除数据孤岛；支持多维度业务快速复盘；自动预测客户、销量、风险等隐藏规律，辅助管理层科学决策，降低运营成本、提升营收。",
+                        score:10
+                    },
+                    {
+                        q:"结合企业业务场景，论述星型模型与雪花模型分别适合什么业务，各自优缺点",
+                        ans:"1.星型模型：适合简单维度、查询频繁的报表业务，结构简单查询快，但冗余高；2.雪花模型：适合多层分级维度（省市县、产品分类），节省存储，但多表关联拖慢查询；企业可混合使用，简单维度用星型，分层维度雪花。",
+                        score:10
+                    },
+                    {
+                        q:"完整论述数据预处理五大步骤的作用与业务必要性",
+                        ans:"数据预处理包含清洗、集成、归约、变换、离散化；原始业务数据存在缺失、重复、异常、冗余，不处理会导致挖掘模型失真；预处理提升数据质量，降低计算开销，保证聚类、分类、关联规则结果可靠，是数据挖掘前置核心环节。",
+                        score:10
+                    },
+                    {
+                        q:"对比朴素贝叶斯、K-Means、Apriori三种算法适用业务场景与核心原理差异",
+                        ans:"1.朴素贝叶斯：有监督分类，基于独立概率假设，用于客户分层、风险判定；2.K-Means：无监督聚类，距离划分簇，用于用户分群、商品聚类；3.Apriori：关联规则，频繁项集挖掘，用于购物篮推荐、商品搭配分析。三者分别解决分类、聚类、关联三类挖掘需求。",
+                        score:10
+                    },
+                    {
+                        q:"从数据仓库分层架构角度，分析ODS、DW、DM三层的定位、数据特征与落地业务场景",
+                        ans:"1.ODS操作数据层：同步业务库实时原始数据，用于实时报表；2.DW数据仓库层：全量历史整合、统一口径，用于全维度综合分析；3.DM数据集市层：面向部门精简汇总数据，业务部门自助查询、轻量化分析。三层分层隔离实时与历史数据，减轻仓库查询压力。",
+                        score:10
+                    }
+                ]
+            },
+            {
+                module:"模块2 数据预处理：五大类数据归约技术",
+                single:[
+                    {
+                        q:"下列不属于数据归约分类的是（）",
+                        opts:["A. 属性归约","B. 记录抽样归约","C. 缺失值填充","D. 特征值离散化归约"],
+                        ans:"C",
+                        score:1
+                    },
+                    {
+                        q:"分层抽样属于哪一类归约手段（）",
+                        opts:["A. 属性归约","B. 记录（行）归约","C. 特征归约","D. 样本归约"],
+                        ans:"B",
+                        score:1
+                    }
+                ],
+                short:[
+                    {
+                        q:"完整列出五大类数据归约技术，并分别说明作用",
+                        ans:"1）属性（列）归约：剔除无分析价值字段，如常量、差异极小、空值、单调类别属性；\n2）记录（行）归约（抽样）：四种抽样：简单随机抽样、等距抽样、分层抽样、整群抽样，缩减样本总量；\n3）特征归约：删除原始数据集中不重要、不相关特征，降低特征维度；\n4）样本归约：从完整数据集筛选代表性样本子集，减少数据规模；\n5）特征值归约：采用离散化技术处理连续特征数值，压缩取值区间，简化计算。",
+                        score:8
+                    }
+                ],
+                calc:[],
+                review:[]
+            },
+            {
+                module:"模块3 多维数据建模：维表、星型模型、雪花模型、索引",
+                single:[
+                    {
+                        q:"星型模型核心结构是（）",
+                        opts:["A. 多层维表互相连接，无中心表","B. 单张事实表直接关联多张扁平化维表","C. 维表分层拆分，通过外键串联","D. 多张事实表共享维表"],
+                        ans:"B",
+                        score:1
+                    },
+                    {
+                        q:"星型、雪花模型对比，描述正确的是（）",
+                        opts:["A. 雪花模型表数量更少，检索速度更快","B. 星型模型冗余少，节省存储空间","C. 雪花模型可读性差，多表连接降低查询速度","D. 星型适配多层复杂维度、多对多关系"],
+                        ans:"C",
+                        score:1
+                    },
+                    {
+                        q:"用于提升多表JOIN连接查询性能的索引是（）",
+                        opts:["A. 位图索引","B. 连接索引","C. 广义索引","D. 主键索引"],
+                        ans:"B",
+                        score:1
+                    }
+                ],
+                short:[
+                    {
+                        q:"简述维表基础构成、三大特征、八类维表类型、概念分层作用",
+                        ans:"基础构成：主键、维度名称、维度层次等细节信息，数据存入高速缓存提升操作速度；\n三大特征：①解构查询更灵活；②每张维表增设独立代理主键，标识维度记录；③内置时间字段，标记数据变更时段；\n八类维表：结构维、信息维、分区维、分类维、退化维、一致维、父子维；\n概念分层作用：①支持不同层级数据汇总；②综合分层结构搭建多维数据模型；③支撑用户多角度、多层次下钻/上卷数据分析。",
+                        score:8
+                    },
+                    {
+                        q:"简述星型模型三大特点、五大优势、四大缺点",
+                        ans:"特点：①多张维表直接与唯一事实表关联；②维表主键为单列；③整体以事实表为结构中心。\n优势：①围绕业务主题，贴合数据组织需求；②表达直观，设计简单易上手；③简化数据库浏览，查询逻辑直接；④适配OLAP，查询性能优秀；⑤逻辑设计简单，无需严格遵循范式。\n缺点：①非规范化存储，数据冗余量大；②维度主键修改时，更新流程复杂耗时；③处理多层维度关系能力弱；④无法清晰表达多对多关联关系。",
+                        score:8
+                    },
+                    {
+                        q:"简述雪花模型四大特点、四大优势、三大缺点",
+                        ans:"特点：①底层维表不直接关联事实表；②分层细化数据粒度；③各级维表依靠外键互相连接；④依旧以事实表为模型中心。\n优势：①减少数据冗余，节省存储；②更容易处理多层复杂维度、维度更新；③表达多对多关联关系更便捷；④查询分析灵活性更高。\n缺点：①结构复杂，用户可读性差；②多表关联导致查询逻辑复杂；③多表连接大幅降低查询性能。",
+                        score:8
+                    },
+                    {
+                        q:"对比星型模型与雪花模型，写出4处不同点",
+                        ans:"1. 数据冗余：星型模型未做规范化，行数据量大、数据冗余多；雪花模型拆分分层维表，消除冗余，行数据量更少。\n2. 可读性：星型模型结构扁平直观，可读性容易；雪花模型多层嵌套，结构复杂，可读性差。\n3. 表数量：星型只有一层维表，整体表数量少；雪花分层拆分维表，总表数量更多。\n4. 查询速度：星型关联表少，检索维度速度快；雪花需要多表JOIN连接，检索速度更慢。",
+                        score:8
+                    },
+                    {
+                        q:"简述三种OLAP优化索引及各自作用",
+                        ans:"1.位图索引：二进制串替代列取值，不修改原始数据，快速匹配检索，提升查询效率；\n2.广义索引：通用查询加速索引，整体提升检索速度；\n3.连接索引：预存储多表关联匹配结果，减少多表JOIN运算耗时，提升多表连接性能。",
+                        score:8
+                    }
+                ],
+                calc:[],
+                review:[]
+            },
+            {
+                module:"模块4 贝叶斯分类模型、贝叶斯信念网络",
+                single:[
+                    {
+                        q:"朴素贝叶斯分类器核心假设是（）",
+                        opts:["A. 属性之间存在树形依赖","B. 所有属性相互独立，无依赖关系","C. 不同类别网络结构不同","D. 仅允许单个属性依赖"],
+                        ans:"B",
+                        score:1
+                    },
+                    {
+                        q:"贝叶斯信念网络两大核心组成是（）",
+                        opts:["A. DAG有向无环图 + CPT条件概率表","B. 距离函数 + 相似度公式","C. 质心 + 簇划分规则","D. 抽样规则 + 离散化方法"],
+                        ans:"A",
+                        score:1
+                    }
+                ],
+                short:[
+                    {
+                        q:"写出四种贝叶斯分类器，并分别说明核心假设/特点",
+                        ans:"1.朴素贝叶斯分类器：最简单高效；假设全部属性相互独立，无依赖关系；\n2.TAN树扩展朴素贝叶斯：放宽独立假设，允许条件属性间存在依赖；\n3.贝武式增强网络朴素贝叶斯：树形结构，属性间存在贝叶斯网络树形关联；\n4.贝叶斯多网（TANB）：不同类别共用一套网络结构；不同属性取值下，变量关联关系存在差异。",
+                        score:8
+                    },
+                    {
+                        q:"简述贝叶斯信念网络定义、两大组成及CPT三类概率存储形式",
+                        ans:"定义：一种概率网络，基于概率推理数学模型，用于解决复杂系统的不确定性、不完整数据问题。\n两大组成：①有向无环图DAG：用图结构描述变量之间的因果依赖关系；②条件概率表CPT：存储节点对应概率分布。\nCPT三类：①无父节点：仅存储先验概率p(X)；②单个父节点：存储条件概率p(X|Y)；③多个父节点：存储多条件联合概率p(X|Y₁,Y₂,…,Yₙ)。",
+                        score:8
+                    }
+                ],
+                calc:[],
+                review:[]
+            },
+            {
+                module:"模块5 聚类算法基础、K-Means、K-Prototypes",
+                single:[
+                    {
+                        q:"K-Means适合处理哪种形状的簇（）",
+                        opts:["A. 非球状不规则簇","B. 类球状凸形簇","C. 带状、环状簇","D. 任意形状簇"],
+                        ans:"B",
+                        score:1
+                    },
+                    {
+                        q:"能处理数值+分类混合属性的原型聚类算法是（）",
+                        opts:["A. K-Means","B. DBSCAN","C. K-Prototypes","D. 朴素贝叶斯"],
+                        ans:"C",
+                        score:1
+                    },
+                    {
+                        q:"下列不属于聚类八大性能要求的是（）",
+                        opts:["A. 高维数据处理能力","B. 噪声数据处理能力","C. 自动生成标签能力","D. 任意形状簇识别能力"],
+                        ans:"C",
+                        score:1
+                    }
+                ],
+                short:[
+                    {
+                        q:"简述簇的两种形状、两类簇间关系、聚类八大性能评价标准",
+                        ans:"一、簇形状：\n①类球状（凸形）簇：依靠距离类算法（K-Means）生成；\n②非球状簇：采用基于密度、原型聚类算法处理。\n二、簇间关系：\n①理想明显分离簇：簇内任意样本距离小于簇间距离，可用阈值划定边界；\n②适配不规则数据簇：基于原型、连片、密度三类簇，适配复杂形状数据。\n三、八大性能要求：\n1.数据集可伸缩能力 2.混合属性处理能力 3.发现任意形状簇能力 4.K参数自适应\n5.噪声处理能力 6.输入顺序适应能力 7.高维数据处理 8.带约束聚类能力。",
+                        score:8
+                    },
+                    {
+                        q:"简述K-Means算法定义、距离四条公理、相似度公式、五步迭代流程",
+                        ans:"定义：经典划分式聚类，使用欧氏距离衡量相似度；距离越大样本相似度越低；优化目标最小化簇内距离平方和SSE。\n距离dist四条公理：\n1.非负性 2.dist(oi,oj)=0当且仅当oi=oj 3.对称性dist(oi,oj)=dist(oj,oi) 4.三角不等式dist(oi,oj) ≤ dist(oi,ok)+dist(ok,oj)\n相似度公式：sim(oi,oj) = 1 / (1 + dist(oi,oj))\n五步流程：\n①输入聚类数K与数据集；②随机选取K个样本作为初始簇质心；\n③计算每个样本到全部质心距离，划分至最近质心对应簇；\n④按簇内样本均值重新计算新质心；\n⑤循环3-4步，更新簇内距离平方和直至函数收敛。",
+                        score:8
+                    },
+                    {
+                        q:"简述K-Means优缺点",
+                        ans:"优点：①框架简单清晰，容易理解；②划分最小化平方误差，聚类效果稳定；③处理大数据集可伸缩，运算高效。\n缺点：①对聚类参数K十分敏感；②对噪声、离群异常数据敏感；③需要手动给定初始划分质心；④需要反复迭代分配样本，计算量大。",
+                        score:8
+                    },
+                    {
+                        q:"简述K-Prototypes适用场景、数学定义、缺点",
+                        ans:"适用场景：处理同时包含数值、分类的混合属性数据集。\n数学定义：数据集S={x₁,x₂…xₙ}；xi={xi1…xid}为d维混合属性数据对象。\n缺点：①初始原型选取敏感；②聚类分辨率低；③迭代过程容易产生空簇。",
+                        score:8
+                    },
+                    {
+                        q:"对比K-Means与K-Prototypes的相同点与不同点",
+                        ans:"相同点：均属于基于原型的划分聚类；仅适配类球形簇；需提前指定K值；依赖初始中心点/原型；抗噪声能力弱，易生成空簇。\n不同点：K-Means仅支持纯数值型数据；K-Prototypes拓展支持数值+分类混合属性数据。",
+                        score:8
+                    }
+                ],
+                calc:[],
+                review:[]
             }
+        ];
 
-            testArea.style.background = '#e0e0e0';
-            testArea.textContent = '测试完成！再次点击重新开始';
-            testBtn.textContent = '重新测试';
+        let currentPaperData = [];
+
+        // 随机生成一套试卷：固定抽取数量 单选20、简答5、计算2、综述1
+        function randomPaper(){
+            const container = document.getElementById("paper-container");
+            document.getElementById("scoreShow").innerText = "";
+            let html = "";
+            currentPaperData = [];
+            // 收集所有题目
+            let allSingle = [];
+            let allShort = [];
+            let allCalc = [];
+            let allReview = [];
+            questionBank.forEach(module=>{
+                if(module.single) allSingle.push(...module.single);
+                if(module.short) allShort.push(...module.short);
+                if(module.calc) allCalc.push(...module.calc);
+                if(module.review) allReview.push(...module.review);
+            });
+            // 打乱并截取指定数量
+            allSingle.sort(()=>Math.random()-0.5);
+            const pickSingle = allSingle.slice(0,20); // 单选固定20道
+            allShort.sort(()=>Math.random()-0.5);
+            const pickShort = allShort.slice(0,5);    // 简答固定5道
+            allCalc.sort(()=>Math.random()-0.5);
+            const pickCalc = allCalc.slice(0,2);      // 计算随机2道（题库6道轮换）
+            allReview.sort(()=>Math.random()-0.5);
+            const pickReview = allReview.slice(0,1);  // 综述随机1道（题库5道轮换）
+
+            let globalNo = 1; // 全局连续题号，不重复
+
+            // 1. 单项选择题
+            html += `<h2>一、单项选择题（每题1分，共20分）</h2>`;
+            pickSingle.forEach(item=>{
+                let uid = `single-${globalNo}`;
+                currentPaperData.push({type:"single",uid,item});
+                html += `<div class="q-block">
+                    <p>${globalNo}. ${item.q}</p>`;
+                item.opts.forEach((opt,oIdx)=>{
+                    let val = String.fromCharCode(65+oIdx);
+                    html += `<p class="radio-item">
+                        <input type="radio" name="${uid}" value="${val}" id="${uid}_${val}">
+                        <label for="${uid}_${val}">${opt}</label>
+                    </p>`;
+                })
+                html += `<div class="answer-wrap">
+                    <button class="show-ans-btn" onclick="toggleAns('${uid}')">显示标准答案</button>
+                    <div class="answer" id="${uid}">标准答案：${item.ans}</div>
+                </div></div>`;
+                globalNo++;
+            });
+
+            // 2. 简答题
+            html += `<h2>二、简答题（每题8分，共40分）</h2>`;
+            pickShort.forEach(item=>{
+                let uid = `short-${globalNo}`;
+                currentPaperData.push({type:"short",uid,item});
+                html += `<div class="q-block">
+                    <p>${globalNo}. ${item.q}</p>
+                    <div class="user-ans-box">
+                        <textarea id="user_${uid}" placeholder="请在此填写你的答案"></textarea>
+                    </div>
+                    <div class="answer-wrap">
+                        <button class="show-ans-btn" onclick="toggleAns('${uid}')">显示参考答案</button>
+                        <div class="answer" id="${uid}">参考答案：${item.ans}</div>
+                    </div>
+                </div>`;
+                globalNo++;
+            });
+
+            // 3. 计算题
+            html += `<h2>三、计算题（每题10分，共20分）</h2>`;
+            pickCalc.forEach(item=>{
+                let uid = `calc-${globalNo}`;
+                currentPaperData.push({type:"calc",uid,item});
+                html += `<div class="q-block">
+                    <p>${globalNo}. ${item.q}</p>
+                    <div class="user-ans-box">
+                        <textarea id="user_${uid}" placeholder="请在此写出计算过程与结果"></textarea>
+                    </div>
+                    <div class="answer-wrap">
+                        <button class="show-ans-btn" onclick="toggleAns('${uid}')">显示参考答案</button>
+                        <div class="answer" id="${uid}">参考答案：${item.ans}</div>
+                    </div>
+                </div>`;
+                globalNo++;
+            });
+
+            // 4. 综述题
+            html += `<h2>四、综述题（每题10分，共10分）</h2>`;
+            pickReview.forEach(item=>{
+                let uid = `review-${globalNo}`;
+                currentPaperData.push({type:"review",uid,item});
+                html += `<div class="q-block">
+                    <p>${globalNo}. ${item.q}</p>
+                    <div class="user-ans-box">
+                        <textarea id="user_${uid}" placeholder="请在此完整作答"></textarea>
+                    </div>
+                    <div class="answer-wrap">
+                        <button class="show-ans-btn" onclick="toggleAns('${uid}')">显示参考答案</button>
+                        <div class="answer" id="${uid}">参考答案：${item.ans}</div>
+                    </div>
+                </div>`;
+                globalNo++;
+            });
+
+            container.innerHTML = html;
         }
 
-        // 适配移动端的爱心花瓣页面
-        function showLovePage() {
-            document.write(`<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>我喜欢你</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        // 切换答案显示隐藏
+        function toggleAns(id){
+            const dom = document.getElementById(id);
+            dom.style.display = dom.style.display === "block" ? "none" : "block";
         }
-        body {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #ffd6e0, #ffb6c1, #f8c8dc);
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-        /* 移动端适配爱心：自动缩放 */
-        .heart {
-            width: 120px;
-            height: 120px;
-            max-width: 30vw;
-            max-height: 30vw;
-            position: relative;
-            animation: heartBeat 1.2s ease-in-out infinite;
-            z-index: 10;
-        }
-        .heart::before,
-        .heart::after {
-            content: '';
-            width: 60px;
-            height: 95px;
-            background: #ff4d6d;
-            border-radius: 50px 50px 0 0;
-            position: absolute;
-        }
-        .heart::before {
-            left: 60px;
-            transform: rotate(-45deg);
-            transform-origin: 0 100%;
-        }
-        .heart::after {
-            left: 0;
-            transform: rotate(45deg);
-            transform-origin: 100% 100%;
-        }
-        @keyframes heartBeat {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-            100% { transform: scale(1); }
-        }
-        .petal {
-            position: absolute;
-            top: -50px;
-            background: #ffc0cb;
-            border-radius: 50%;
-            opacity: 0.8;
-            animation: petalFall linear infinite;
-            z-index: 5;
-        }
-        @keyframes petalFall {
-            0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
-            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
-        /* 移动端适配弹窗：小尺寸、不溢出 */
-        .love-popup {
-            position: absolute;
-            padding: 8px 14px;
-            border-radius: 15px;
-            background: #ff6b9d;
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
-            z-index: 999;
-            animation: popupFade 0.3s ease;
-            white-space: nowrap;
-            max-width: 80vw;
-        }
-        @keyframes popupFade {
-            0% { opacity: 0; transform: scale(0.5); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-    </style>
-</head>
-<body>
-    <div class="heart"></div>
-    <script>
-        // 生成花瓣
-        function createPetals() {
-            const petalCount = 150;
-            const body = document.body;
-            for (let i = 0; i < petalCount; i++) {
-                const petal = document.createElement('div');
-                petal.classList.add('petal');
-                const size = Math.random() * 12 + 8;
-                petal.style.width = size + 'px';
-                petal.style.height = size + 'px';
-                petal.style.left = Math.random() * 100 + 'vw';
-                const duration = Math.random() * 6 + 4;
-                petal.style.animationDuration = duration + 's';
-                const colors = ['#ffc0cb', '#ffd1dc', '#f8c8dc', '#ffb6c1', '#fcc5e2'];
-                petal.style.background = colors[Math.floor(Math.random() * colors.length)];
-                petal.style.animationDelay = Math.random() * 4 + 's';
-                body.appendChild(petal);
-            }
-        }
-        // 生成情话弹窗（移动端防溢出）
-        function createLovePopup() {
-            const loveTexts = ['我想你', '我爱你', '我喜欢你', '好想你', '超爱你', '喜欢你呀', '满心是你','我只喜欢你'];
-            const popupColors = ['#ff6b9d', '#ff4d6d', '#f883c9', '#ff9eb8', '#ff7ba8'];
-            const popup = document.createElement('div');
-            popup.classList.add('love-popup');
-            popup.innerText = loveTexts[Math.floor(Math.random() * loveTexts.length)];
-            popup.style.background = popupColors[Math.floor(Math.random() * popupColors.length)];
-            
-            // 移动端适配位置，防止超出屏幕
-            const maxLeft = window.innerWidth - 100;
-            const maxTop = window.innerHeight - 50;
-            popup.style.left = Math.random() * maxLeft + 'px';
-            popup.style.top = Math.random() * maxTop + 'px';
 
-            document.body.appendChild(popup);
-            setTimeout(() => popup.remove(), 2000);
+        // 计算总分（简答/计算/综述：输入超过5字符满分，否则0分）
+        function calcTotalScore(){
+            let total = 0;
+            let tipText = "";
+            currentPaperData.forEach(que=>{
+                const item = que.item;
+                if(que.type === "single"){
+                    const radios = document.getElementsByName(que.uid);
+                    let selectVal = "";
+                    radios.forEach(r=>{if(r.checked) selectVal = r.value;});
+                    if(selectVal === item.ans){
+                        total += item.score;
+                        tipText += `<p class="right">${que.item.q}：回答正确，+${item.score}分</p>`;
+                    }else{
+                        tipText += `<p class="wrong">${que.item.q}：回答错误，正确答案${item.ans}</p>`;
+                    }
+                }else if(["short","calc","review"].includes(que.type)){
+                    const userText = document.getElementById("user_"+que.uid).value.trim();
+                    if(userText.length > 5){
+                        total += item.score;
+                        tipText += `<p class="right">${que.item.q}：已作答，默认满分+${item.score}分（人工核对细节）</p>`;
+                    }else{
+                        tipText += `<p class="wrong">${que.item.q}：未填写完整，0分</p>`;
+                    }
+                }
+            })
+            document.getElementById("scoreShow").innerHTML = `
+                <div>你的本次总分：${total} / 100</div>
+                <div style="font-size:16px;margin-top:10px;">${tipText}</div>
+            `;
         }
-        // 批量弹窗
-        function batchCreatePopups() {
-            let count = 0;
-            const timer = setInterval(() => {
-                createLovePopup();
-                count++;
-                if (count >= 300) clearInterval(timer);
-            }, 50);
-        }
-        window.onload = () => {
-            createPetals();
-            batchCreatePopups();
-        };
-    <\/script>
-</body>
-</html>`);
-            document.close();
-        }
+
+        window.onload = randomPaper;
     </script>
 </body>
 </html>
