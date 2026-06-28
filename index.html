@@ -2,530 +2,232 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>数据仓库与数据挖掘考试题库（自测计分）</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask与大数据可视化期末复习助手</title>
     <style>
-        *{box-sizing: border-box;margin:0;padding:0;font-family:"Microsoft Yahei",sans-serif;}
-        body{background:#f5f7fa;padding:30px;max-width:1200px;margin:0 auto;}
-        h1{text-align:center;color:#2c3e50;margin-bottom:10px;border-bottom:2px solid #3498db;padding-bottom:10px;}
-        .score-tip{background:#dceeff;padding:12px;border-radius:8px;margin-bottom:20px;line-height:1.8;}
-        .paper-wrap{background:#fff;border-radius:10px;padding:20px;margin-bottom:25px;box-shadow:0 2px 12px #e0e5ec;}
-        h2{color:#34495e;margin-bottom:18px;border-left:5px solid #3498db;padding-left:10px;margin-top:30px;}
-        h2:first-of-type{margin-top:0;}
-        h3{color:#444;margin:15px 0 10px;font-size:18px;}
-        .radio-item{margin:8px 0 8px 20px;line-height:1.7;}
-        .answer-wrap{margin:10px 0;}
-        .answer{background:#e8f4fd;padding:10px;border-radius:6px;color:#2980b9;white-space:pre-line;line-height:1.8;display:none;}
-        .user-ans-box{margin:8px 0;}
-        textarea{width:100%;min-height:80px;padding:8px;border:1px solid #ccc;border-radius:4px;resize:vertical;}
-        .show-ans-btn{padding:4px 10px;background:#95c8f0;border:none;border-radius:4px;cursor:pointer;margin-bottom:6px;}
-        .q-block{margin-bottom:22px;border-bottom:1px dashed #eee;padding-bottom:15px;}
-        .q-block:last-child{border-bottom:none;}
-        .result-box{margin:30px 0 10px;text-align:center;}
-        .btn-box{text-align:center;margin-top:10px;gap:15px;display:flex;justify-content:center;flex-wrap:wrap;}
-        button{padding:12px 30px;background:#3498db;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;transition:0.2s;}
-        button:hover{background:#217dbb;}
-        #calcScoreBtn{background:#27ae60;}
-        #calcScoreBtn:hover{background:#1e8449;}
-        .table-box{margin:12px 0;overflow-x:auto;}
-        table{width:100%;border-collapse:collapse;}
-        td,th{border:1px solid #ddd;padding:10px;text-align:center;}
-        th{background:#f0f7ff;}
-        .right{color:#27ae60;font-weight:bold;}
-        .wrong{color:#e74c3c;font-weight:bold;}
-        .total-score{font-size:20px;text-align:center;margin:20px 0;font-weight:bold;}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px}
+        .container{max-width:1200px;margin:0 auto}
+        .header{text-align:center;color:white;margin-bottom:25px}
+        .header h1{font-size:2.3em;margin-bottom:8px;text-shadow:2px 2px 4px rgba(0,0,0,.3)}
+        .header p{font-size:1.05em;opacity:.9}
+        .stats-bar{display:flex;justify-content:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+        .stat-item{background:rgba(255,255,255,.2);padding:8px 16px;border-radius:20px;color:white;backdrop-filter:blur(10px);font-size:.9em}
+        .stat-item b{font-size:1.2em}
+        .nav-tabs{display:flex;justify-content:center;gap:8px;margin-bottom:25px;flex-wrap:wrap}
+        .nav-btn{padding:10px 22px;border:none;border-radius:25px;background:rgba(255,255,255,.3);color:white;cursor:pointer;font-size:15px;transition:all .3s;backdrop-filter:blur(10px)}
+        .nav-btn:hover{background:rgba(255,255,255,.5);transform:translateY(-2px)}
+        .nav-btn.active{background:white;color:#667eea;font-weight:bold}
+        .content-card{background:white;border-radius:20px;padding:30px;box-shadow:0 10px 40px rgba(0,0,0,.2);min-height:500px}
+        .page{display:none}.page.active{display:block;animation:fadeIn .3s}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .exam-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:15px;margin:20px 0}
+        .exam-card{background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;padding:18px;color:white;text-align:center}
+        .exam-card .num{font-size:2em;font-weight:bold}
+        .exam-card .label{font-size:.85em;opacity:.9;margin-top:5px}
+        .gen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:20px 0}
+        .gen-card{background:#f8f9fa;border-radius:10px;padding:15px;text-align:center;border-left:4px solid #667eea}
+        .gen-card .num{font-size:1.8em;font-weight:bold;color:#667eea}
+        .gen-card .label{font-size:.85em;color:#666;margin-top:4px}
+        .section-title{font-size:1.3em;color:#333;margin:25px 0 15px;padding-bottom:8px;border-bottom:2px solid #667eea}
+        .flip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:25px}
+        .flip-card{perspective:1000px;height:320px;cursor:pointer}
+        .flip-card-inner{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d}
+        .flip-card.flipped .flip-card-inner{transform:rotateY(180deg)}
+        .flip-front,.flip-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:15px;padding:25px;display:flex;flex-direction:column;justify-content:center;overflow-y:auto}
+        .flip-front{background:linear-gradient(135deg,#667eea,#764ba2);color:white}
+        .flip-front h3{font-size:1.25em;margin-bottom:10px}
+        .flip-front p{font-size:1em;opacity:.9;line-height:1.7}
+        .flip-front .hint{position:absolute;bottom:15px;right:18px;font-size:.85em;opacity:.7}
+        .flip-back{background:#f8f9fa;transform:rotateY(180deg);color:#333;border:2px solid #667eea}
+        .flip-back h4{color:#667eea;margin-bottom:12px;font-size:1.1em}
+        .flip-back p,.flip-back li{font-size:.95em;line-height:1.8;color:#444}
+        .flip-back ul{margin-left:20px}
+        .card-tag{display:inline-block;background:rgba(255,255,255,.25);padding:3px 12px;border-radius:12px;font-size:.85em;margin-bottom:10px}
+        .flip-back .card-tag{background:#e8eaff;color:#667eea}
+        .code-section{margin-bottom:35px;padding:25px;background:#f8f9fa;border-radius:15px;border-left:5px solid #667eea}
+        .code-section h3{color:#667eea;font-size:1.3em;margin-bottom:15px}
+        .code-sub{margin:18px 0;padding:18px;background:white;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+        .code-sub h4{color:#764ba2;font-size:1.1em;margin-bottom:12px}
+        .code-block{background:#2d2d2d;color:#f8f8f2;padding:18px;border-radius:8px;overflow-x:auto;font-family:'Consolas','Monaco','Courier New',monospace;font-size:.88em;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;margin:12px 0}
+        .ck{color:#66d9ef}.cs{color:#e6db74}.cf{color:#a6e22e}.cc{color:#75715e}
+        .key-point{background:linear-gradient(135deg,#ffd700,#ffed4e);padding:14px 18px;border-radius:8px;margin:12px 0;border-left:4px solid #ffa500}
+        .key-point b{color:#d35400}
+        .anno-table{width:100%;border-collapse:collapse;margin:12px 0;background:white;border-radius:8px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.1)}
+        .anno-table th{background:#667eea;color:white;padding:12px;text-align:left}
+        .anno-table td{padding:10px 12px;border-bottom:1px solid #e0e0e0}
+        .anno-table tr:hover{background:#f5f5f5}
+        .anno-table code{background:#f0f0f0;padding:2px 6px;border-radius:4px;color:#d63384;font-family:'Consolas',monospace;font-size:.9em}
+        .quiz-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #f0f0f0;flex-wrap:wrap;gap:10px}
+        .q-type{background:#667eea;color:white;padding:4px 14px;border-radius:15px;font-size:13px}
+        .q-num{color:#666;font-size:13px}
+        .q-text{font-size:17px;line-height:1.8;margin-bottom:20px;color:#333}
+        .options{display:flex;flex-direction:column;gap:10px}
+        .option{padding:14px 18px;border:2px solid #e0e0e0;border-radius:12px;cursor:pointer;transition:all .3s;display:flex;align-items:flex-start;gap:10px}
+        .option:hover{border-color:#667eea;background:#f8f9ff}
+        .option.selected{border-color:#667eea;background:#f0f3ff}
+        .option.correct{border-color:#4caf50;background:#e8f5e9}
+        .option.wrong{border-color:#f44336;background:#ffebee}
+        .option-letter{width:26px;height:26px;border-radius:50%;background:#e0e0e0;display:flex;align-items:center;justify-content:center;font-weight:bold;flex-shrink:0;font-size:.9em}
+        .option.selected .option-letter{background:#667eea;color:white}
+        .option.correct .option-letter{background:#4caf50;color:white}
+        .option.wrong .option-letter{background:#f44336;color:white}
+        .answer-area{margin-top:20px;padding:18px;background:#f8f9fa;border-radius:12px;display:none}
+        .answer-area.show{display:block;animation:fadeIn .3s}
+        .answer-label{font-weight:bold;color:#4caf50;margin-bottom:8px}
+        .answer-explanation{color:#555;line-height:1.8}
+        .knowledge-tag{display:inline-block;background:#e3f2fd;color:#1976d2;padding:3px 10px;border-radius:12px;font-size:12px;margin-top:8px;margin-right:6px}
+        .btn-group{display:flex;justify-content:center;gap:12px;padding:14px 20px;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-top:1px solid #e8e8e8;position:sticky;bottom:0;z-index:10;margin:-30px;margin-top:20px}
+        .btn{padding:10px 25px;border:none;border-radius:25px;cursor:pointer;font-size:15px;transition:all .3s}
+        .btn-primary{background:#667eea;color:white}.btn-primary:hover{background:#5a6fd6;transform:translateY(-2px)}
+        .btn-secondary{background:#e0e0e0;color:#666}.btn-secondary:hover{background:#d0d0d0}
+        .btn-success{background:#4caf50;color:white}.btn-success:hover{background:#43a047}
+        .btn-warning{background:#ff9800;color:white}.btn-warning:hover{background:#f57c00}
+        .btn-info{background:#2196f3;color:white}.btn-info:hover{background:#1976d2}
+        .btn-danger{background:#f44336;color:white}.btn-danger:hover{background:#d32f2f}
+        .auto-toggle{display:flex;align-items:center;gap:6px;font-size:13px;color:#888;cursor:pointer;user-select:none}
+        .auto-toggle input{accent-color:#667eea;cursor:pointer}
+        .judge-options{display:flex;gap:15px;justify-content:center;margin:20px 0}
+        .judge-btn{padding:15px 50px;border:2px solid #e0e0e0;border-radius:12px;cursor:pointer;font-size:1.1em;font-weight:bold;transition:all .3s;background:white}
+        .judge-btn:hover{border-color:#667eea;background:#f8f9ff}
+        .judge-btn.correct{border-color:#4caf50;background:#e8f5e9;color:#4caf50}
+        .judge-btn.wrong{border-color:#f44336;background:#ffebee;color:#f44336}
+        .short-input-area textarea{width:100%;min-height:150px;padding:18px;border:2px dashed #b0bec5;border-radius:12px;font-size:14px;line-height:1.8;resize:vertical;font-family:inherit;transition:border-color .3s;background:#fafafa}
+        .short-input-area textarea:focus{outline:none;border-color:#667eea;border-style:solid;background:#fff}
+        .ref-answer{margin-top:15px;padding:18px;background:#e8f5e9;border-radius:12px;display:none}
+        .ref-answer.show{display:block;animation:fadeIn .3s}
+        .ref-answer h4{color:#4caf50;margin-bottom:10px}
+        .ref-answer p{line-height:1.8;color:#555}
+        .fill-code{background:#2d2d2d;color:#f8f8f2;padding:20px;border-radius:8px;overflow-x:auto;font-family:'Consolas','Monaco','Courier New',monospace;font-size:.88em;line-height:1.7;white-space:pre-wrap;word-wrap:break-word;margin:15px 0}
+        .blank-btn{display:inline-block;min-width:100px;border:2px dashed #ffc107;border-radius:6px;padding:2px 10px;background:rgba(255,193,7,.15);color:#ffc107;font-weight:bold;cursor:pointer;transition:all .3s;text-align:center;font-family:inherit}
+        .blank-btn:hover{background:rgba(255,193,7,.3)}
+        .blank-btn.filled{border-style:solid;background:rgba(102,126,234,.2);color:#90caf9;border-color:#667eea}
+        .blank-btn.correct{background:rgba(76,175,80,.25);color:#81c784;border-color:#4caf50;border-style:solid}
+        .blank-btn.wrong{background:rgba(244,67,54,.25);color:#e57373;border-color:#f44336;border-style:solid}
+        .options-popup{position:fixed;background:white;border-radius:12px;padding:18px;box-shadow:0 10px 40px rgba(0,0,0,.3);z-index:1000;min-width:280px;max-width:450px;display:none}
+        .options-popup.show{display:block;animation:slideDown .3s}
+        @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+        .popup-title{font-weight:bold;color:#667eea;margin-bottom:12px;font-size:.95em;border-bottom:2px solid #667eea;padding-bottom:8px}
+        .popup-option{background:#f8f9fa;padding:10px 14px;border-radius:6px;border:2px solid transparent;cursor:pointer;transition:all .3s;margin:6px 0;font-family:'Consolas',monospace;font-size:.9em}
+        .popup-option:hover{background:#f0f4ff;border-color:#667eea}
+        .card-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:center}
+        .card-modal.show{display:flex}
+        .modal-content{background:white;border-radius:20px;padding:28px;max-width:800px;width:90%;max-height:80vh;overflow-y:auto}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #f0f0f0}
+        .modal-header h3{font-size:18px;color:#333}
+        .modal-close{background:none;border:none;font-size:26px;cursor:pointer;color:#999}
+        .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(55px,1fr));gap:8px;margin-bottom:18px}
+        .card-item{aspect-ratio:1;border:2px solid #e0e0e0;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:bold;font-size:.85em;transition:all .3s}
+        .card-item:hover{transform:scale(1.08)}
+        .card-item.c{background:#e8f5e9;border-color:#4caf50;color:#4caf50}
+        .card-item.w{background:#ffebee;border-color:#f44336;color:#f44336}
+        .card-item.u{background:#f5f5f5;border-color:#bdbdbd;color:#757575}
+        .card-stats{display:flex;justify-content:space-around;padding:18px;background:#f9f9f9;border-radius:12px}
+        .card-stat{text-align:center}
+        .card-stat-num{font-size:22px;font-weight:bold;margin-bottom:4px}
+        .card-stat-label{font-size:12px;color:#666}
+        .filter-bar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+        .filter-btn{padding:7px 14px;border:2px solid #e0e0e0;border-radius:20px;background:white;cursor:pointer;font-size:13px;transition:all .3s}
+        .filter-btn:hover{border-color:#667eea}
+        .filter-btn.active{border-color:#667eea;background:#667eea;color:white}
+        .wrong-list{display:flex;flex-direction:column;gap:12px}
+        .wrong-item{padding:18px;background:#fff5f5;border-left:4px solid #f44336;border-radius:10px;cursor:pointer;transition:all .3s}
+        .wrong-item:hover{background:#ffebee}
+        .wrong-item .wt{color:#333;margin-bottom:8px}
+        .wrong-item .wm{display:flex;gap:8px;font-size:12px;color:#999}
+        .empty-state{text-align:center;padding:50px 20px;color:#999}
+        .empty-state .icon{font-size:50px;margin-bottom:15px}
+        .progress-bar-container{background:#e0e0e0;border-radius:10px;height:18px;overflow:hidden;margin:10px 0}
+        .progress-bar{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:10px;transition:width .5s}
+        .view-toggle{display:flex;gap:8px;margin-bottom:18px}
+        .toggle-btn{padding:8px 18px;border:2px solid #667eea;border-radius:20px;background:white;color:#667eea;cursor:pointer;font-size:13px;transition:all .3s}
+        .toggle-btn.active{background:#667eea;color:white}
+        .list-view .section{margin-bottom:20px;padding:20px;background:#f8f9fa;border-radius:12px;border-left:4px solid #667eea}
+        .list-view .section h4{color:#667eea;margin-bottom:10px}
+        .list-view .section p,.list-view .section li{color:#444;line-height:1.8}
+        .list-view .section ul{margin-left:18px}
+        @media(max-width:768px){
+            body{padding:10px}
+            .content-card{padding:18px}
+            .header h1{font-size:1.6em}
+            .flip-grid{grid-template-columns:1fr}
+            .flip-card{height:240px}
+            .judge-btn{padding:12px 35px}
+            .btn-group{flex-wrap:wrap}
+        }
     </style>
 </head>
 <body>
-    <h1>数据仓库与数据挖掘期末考试题库（自测计分版）</h1>
-    <div class="score-tip">
-        试卷分值说明：<br>
-        1. 单项选择题：每题1分，共20分<br>
-        2. 简答题：每题8分，共40分<br>
-        3. 计算题：每题10分，共20分<br>
-        4. 综述题：每题10分，共10分<br>
-        满分100分，做完题目后点击底部按钮操作
+<div class="container">
+    <div class="header">
+        <h1>📚 Flask与大数据可视化期末复习助手</h1>
+        <p>Flask · PyQt5 · 数据库 · 数据可视化 · 全面覆盖</p>
     </div>
-    <div class="paper-wrap" id="paper-container"></div>
-
-    <!-- 判分结果区域移到按钮上方 -->
-    <div class="result-box total-score" id="scoreShow"></div>
-
-    <!-- 按钮全部放到页面最底部 -->
-    <div class="btn-box">
-        <button onclick="randomPaper()">随机刷新整套试卷</button>
-        <button id="calcScoreBtn" onclick="calcTotalScore()">交卷判分，查看总分</button>
+    <div class="stats-bar" id="globalStats"></div>
+    <div class="nav-tabs">
+        <button class="nav-btn active" onclick="switchPage('overview',this)">📋 考试概览</button>
+        <button class="nav-btn" onclick="switchPage('cards',this)">🃏 知识卡片</button>
+        <button class="nav-btn" onclick="switchPage('code-kp',this)">💻 代码知识点</button>
+        <button class="nav-btn" onclick="switchPage('quiz',this)">🎯 随机刷题</button>
+        <button class="nav-btn" onclick="switchPage('wrong',this)">📕 错题本</button>
+        <button class="nav-btn" onclick="switchPage('progress',this)">📊 学习进度</button>
     </div>
-
-    <script>
-        // 完整题库：计算题6道、综述题5道、单选20道充足
-        const questionBank = [
-            {
-                module:"模块1 数据挖掘、数据仓库、OLAP、BI综合基础",
-                single:[
-                    {
-                        q:"下列不属于数据挖掘特点的是（）",
-                        opts:["A. 可处理海量数据","B. 挖掘规则动态变化","C. 必须人工设定固定模式","D. 挖掘结果可理解、可运用"],
-                        ans:"C",
-                        score:1
-                    },
-                    {
-                        q:"BI完整构成公式为（）",
-                        opts:["A. BI=数据仓库+数据挖掘","B. BI=数据仓库+OLAP+数据挖掘","C. BI=OLAP+数据挖掘","D. BI=数据仓库+元数据"],
-                        ans:"B",
-                        score:1
-                    },
-                    {
-                        q:"关于OLAP与数据挖掘描述正确的是（）",
-                        opts:["A. OLAP属于归纳推理、发现未知模式","B. 数据挖掘属于验证式分析","C. OLAP面向用户已知维度做交互式查询","D. 数据挖掘运算速度更快"],
-                        ans:"C",
-                        score:1
-                    },
-                    {
-                        q:"数据仓库与数据集市对比，说法错误的是（）",
-                        opts:["A. 数据仓库为所有集市提供底层数据源","B. 数据集市开发周期更短、落地速度快","C. 数据仓库数据粒度更粗","D. 数据集市规模更小、面向部门业务"],
-                        ans:"C",
-                        score:1
-                    },
-                    {
-                        q:"OLAP五大核心特征中，最关键性能指标是（）",
-                        opts:["A. 多维性","B. 快速性","C. 交互性","D. 共享性"],
-                        ans:"B",
-                        score:1
-                    },
-                    {
-                        q:"数据仓库的数据具有什么时间特性（）",
-                        opts:["A. 实时动态更新","B. 历史快照、时变","C. 仅存储当日数据","D. 可随意删除历史数据"],
-                        ans:"B",
-                        score:1
-                    },
-                    {
-                        q:"下列属于描述性数据挖掘任务的是（）",
-                        opts:["A. 分类预测","B. 聚类分析","C. 回归预测","D. 时序预测"],
-                        ans:"B",
-                        score:1
-                    },
-                    {
-                        q:"数据仓库四层架构最底层是（）",
-                        opts:["A. 数据集市层","B. 数据仓库层","C. 数据源层","D. ODS操作数据层"],
-                        ans:"C",
-                        score:1
-                    },
-                    {
-                        q:"关联规则挖掘经典算法是（）",
-                        opts:["A. K-Means","B. Apriori","C. 朴素贝叶斯","D. DBSCAN"],
-                        ans:"B",
-                        score:1
-                    },
-                    {
-                        q:"退化维表的含义是（）",
-                        opts:["A. 没有独立维表，字段直接放入事实表","B. 维度多层拆分","C. 维度存在多层父子关系","D. 维度数据持续退化失效"],
-                        ans:"A",
-                        score:1
-                    }
-                ],
-                short:[
-                    {
-                        q:"简述数据挖掘五大特点",
-                        ans:"①能够处理大规模海量数据；②自动挖掘决策者感兴趣的隐藏规则、模式；③挖掘得到的知识可接受、可理解、可落地运用；④挖掘规则依托统计规律生成；⑤挖掘规则具备动态性，随数据更新发生变化。",
-                        score:8
-                    },
-                    {
-                        q:"简述预测建模四步标准流程",
-                        ans:"①收集业务历史数据集；②对原始数据进行清洗、预处理；③选择适配业务场景的算法搭建模型；④完成模型评估、调优优化。",
-                        score:8
-                    },
-                    {
-                        q:"简述数据仓库与数据集市三点核心区别",
-                        ans:"①层级关系：数据仓库作为底层统一数据源，为全部数据集市提供数据；②开发周期：数据集市开发周期短、上线快；数据仓库建设周期长、实施复杂；③数据粒度：数据仓库存储数据粒度更精细，数据集市粒度更粗。",
-                        score:8
-                    },
-                    {
-                        q:"简述元数据的两大作用与管理内容",
-                        ans:"作用：①构建数据集必备，辅助用户读懂、理解仓库数据；②保障整体数据质量，支撑业务需求迭代变更。\n管理内容：采集并存储元数据、搭建元数据集、完成元数据标准化；持续同步更新元数据，解决数据更新冲突。",
-                        score:8
-                    },
-                    {
-                        q:"简述OLAP定义、核心作用与五大特征",
-                        ans:"定义：一种多维交互式分析软件技术，支持分析人员从多维度快速存取数据，实现深度业务分析，核心是联机多维快速查询处理。\n五大特征：多维性（最直观特征）、交互性、快速性（最关键性能指标）、共享性、信息性。",
-                        score:8
-                    },
-                    {
-                        q:"写出BI体系公式，并分别说明三层组件分工",
-                        ans:"公式：BI = 数据仓库 + OLAP + 数据挖掘\n分工：①数据仓库：整合存储企业全量历史多源数据；②OLAP：验证式多维交互式查询，分析已知业务维度；③数据挖掘：归纳式自动挖掘隐藏数据规律，实现业务预测分析。",
-                        score:8
-                    }
-                ],
-                calc:[
-                    {
-                        q:"给定支持度与置信度计算公式，设事务集共100条，包含A的事务40条，同时包含A、B的事务12条，计算{A→B}的支持度与置信度",
-                        ans:"1.支持度=同时包含A、B事务数/总事务=12/100=12%\n2.置信度=同时包含A、B事务数/包含A事务=12/40=30%",
-                        score:10
-                    },
-                    {
-                        q:"给定数据集样本距离，样本A(2,4)、样本B(6,7)，计算欧式距离",
-                        ans:"欧式距离公式：dist=√[(x1-x2)²+(y1-y2)²]\n代入：√[(2-6)²+(4-7)²]=√(16+9)=√25=5",
-                        score:10
-                    },
-                    {
-                        q:"事务数据库共50条记录，商品C出现20次，C和D同时出现8次，求关联规则C→D的支持度、置信度",
-                        ans:"支持度=8/50=16%；置信度=8/20=40%",
-                        score:10
-                    },
-                    {
-                        q:"两个样本(1,3,5)、(4,7,2)，计算三维欧式距离",
-                        ans:"dist=√[(1-4)²+(3-7)²+(5-2)²]=√(9+16+9)=√34≈5.83",
-                        score:10
-                    },
-                    {
-                        q:"数据集共80条，项集{E,F}出现16次，求支持度；项E出现32次，求E→F置信度",
-                        ans:"支持度=16/80=20%；置信度=16/32=50%",
-                        score:10
-                    },
-                    {
-                        q:"样本1(0,0)，样本2(3,4)，曼哈顿距离与欧式距离分别是多少",
-                        ans:"曼哈顿距离=|0-3|+|0-4|=7；欧式距离=√(9+16)=5",
-                        score:10
-                    }
-                ],
-                review:[
-                    {
-                        q:"综合阐述数据仓库、OLAP、数据挖掘三者的联系与整体商业应用价值",
-                        ans:"1.联系：数据仓库负责统一存储企业历史多源数据，作为底层数据源；OLAP基于仓库数据做多维交互式验证分析；数据挖掘依托仓库海量数据自动挖掘隐藏规律，三者共同构成BI完整体系。\n2.商业价值：统一整合企业分散业务数据，消除数据孤岛；支持多维度业务快速复盘；自动预测客户、销量、风险等隐藏规律，辅助管理层科学决策，降低运营成本、提升营收。",
-                        score:10
-                    },
-                    {
-                        q:"结合企业业务场景，论述星型模型与雪花模型分别适合什么业务，各自优缺点",
-                        ans:"1.星型模型：适合简单维度、查询频繁的报表业务，结构简单查询快，但冗余高；2.雪花模型：适合多层分级维度（省市县、产品分类），节省存储，但多表关联拖慢查询；企业可混合使用，简单维度用星型，分层维度雪花。",
-                        score:10
-                    },
-                    {
-                        q:"完整论述数据预处理五大步骤的作用与业务必要性",
-                        ans:"数据预处理包含清洗、集成、归约、变换、离散化；原始业务数据存在缺失、重复、异常、冗余，不处理会导致挖掘模型失真；预处理提升数据质量，降低计算开销，保证聚类、分类、关联规则结果可靠，是数据挖掘前置核心环节。",
-                        score:10
-                    },
-                    {
-                        q:"对比朴素贝叶斯、K-Means、Apriori三种算法适用业务场景与核心原理差异",
-                        ans:"1.朴素贝叶斯：有监督分类，基于独立概率假设，用于客户分层、风险判定；2.K-Means：无监督聚类，距离划分簇，用于用户分群、商品聚类；3.Apriori：关联规则，频繁项集挖掘，用于购物篮推荐、商品搭配分析。三者分别解决分类、聚类、关联三类挖掘需求。",
-                        score:10
-                    },
-                    {
-                        q:"从数据仓库分层架构角度，分析ODS、DW、DM三层的定位、数据特征与落地业务场景",
-                        ans:"1.ODS操作数据层：同步业务库实时原始数据，用于实时报表；2.DW数据仓库层：全量历史整合、统一口径，用于全维度综合分析；3.DM数据集市层：面向部门精简汇总数据，业务部门自助查询、轻量化分析。三层分层隔离实时与历史数据，减轻仓库查询压力。",
-                        score:10
-                    }
-                ]
-            },
-            {
-                module:"模块2 数据预处理：五大类数据归约技术",
-                single:[
-                    {
-                        q:"下列不属于数据归约分类的是（）",
-                        opts:["A. 属性归约","B. 记录抽样归约","C. 缺失值填充","D. 特征值离散化归约"],
-                        ans:"C",
-                        score:1
-                    },
-                    {
-                        q:"分层抽样属于哪一类归约手段（）",
-                        opts:["A. 属性归约","B. 记录（行）归约","C. 特征归约","D. 样本归约"],
-                        ans:"B",
-                        score:1
-                    }
-                ],
-                short:[
-                    {
-                        q:"完整列出五大类数据归约技术，并分别说明作用",
-                        ans:"1）属性（列）归约：剔除无分析价值字段，如常量、差异极小、空值、单调类别属性；\n2）记录（行）归约（抽样）：四种抽样：简单随机抽样、等距抽样、分层抽样、整群抽样，缩减样本总量；\n3）特征归约：删除原始数据集中不重要、不相关特征，降低特征维度；\n4）样本归约：从完整数据集筛选代表性样本子集，减少数据规模；\n5）特征值归约：采用离散化技术处理连续特征数值，压缩取值区间，简化计算。",
-                        score:8
-                    }
-                ],
-                calc:[],
-                review:[]
-            },
-            {
-                module:"模块3 多维数据建模：维表、星型模型、雪花模型、索引",
-                single:[
-                    {
-                        q:"星型模型核心结构是（）",
-                        opts:["A. 多层维表互相连接，无中心表","B. 单张事实表直接关联多张扁平化维表","C. 维表分层拆分，通过外键串联","D. 多张事实表共享维表"],
-                        ans:"B",
-                        score:1
-                    },
-                    {
-                        q:"星型、雪花模型对比，描述正确的是（）",
-                        opts:["A. 雪花模型表数量更少，检索速度更快","B. 星型模型冗余少，节省存储空间","C. 雪花模型可读性差，多表连接降低查询速度","D. 星型适配多层复杂维度、多对多关系"],
-                        ans:"C",
-                        score:1
-                    },
-                    {
-                        q:"用于提升多表JOIN连接查询性能的索引是（）",
-                        opts:["A. 位图索引","B. 连接索引","C. 广义索引","D. 主键索引"],
-                        ans:"B",
-                        score:1
-                    }
-                ],
-                short:[
-                    {
-                        q:"简述维表基础构成、三大特征、八类维表类型、概念分层作用",
-                        ans:"基础构成：主键、维度名称、维度层次等细节信息，数据存入高速缓存提升操作速度；\n三大特征：①解构查询更灵活；②每张维表增设独立代理主键，标识维度记录；③内置时间字段，标记数据变更时段；\n八类维表：结构维、信息维、分区维、分类维、退化维、一致维、父子维；\n概念分层作用：①支持不同层级数据汇总；②综合分层结构搭建多维数据模型；③支撑用户多角度、多层次下钻/上卷数据分析。",
-                        score:8
-                    },
-                    {
-                        q:"简述星型模型三大特点、五大优势、四大缺点",
-                        ans:"特点：①多张维表直接与唯一事实表关联；②维表主键为单列；③整体以事实表为结构中心。\n优势：①围绕业务主题，贴合数据组织需求；②表达直观，设计简单易上手；③简化数据库浏览，查询逻辑直接；④适配OLAP，查询性能优秀；⑤逻辑设计简单，无需严格遵循范式。\n缺点：①非规范化存储，数据冗余量大；②维度主键修改时，更新流程复杂耗时；③处理多层维度关系能力弱；④无法清晰表达多对多关联关系。",
-                        score:8
-                    },
-                    {
-                        q:"简述雪花模型四大特点、四大优势、三大缺点",
-                        ans:"特点：①底层维表不直接关联事实表；②分层细化数据粒度；③各级维表依靠外键互相连接；④依旧以事实表为模型中心。\n优势：①减少数据冗余，节省存储；②更容易处理多层复杂维度、维度更新；③表达多对多关联关系更便捷；④查询分析灵活性更高。\n缺点：①结构复杂，用户可读性差；②多表关联导致查询逻辑复杂；③多表连接大幅降低查询性能。",
-                        score:8
-                    },
-                    {
-                        q:"对比星型模型与雪花模型，写出4处不同点",
-                        ans:"1. 数据冗余：星型模型未做规范化，行数据量大、数据冗余多；雪花模型拆分分层维表，消除冗余，行数据量更少。\n2. 可读性：星型模型结构扁平直观，可读性容易；雪花模型多层嵌套，结构复杂，可读性差。\n3. 表数量：星型只有一层维表，整体表数量少；雪花分层拆分维表，总表数量更多。\n4. 查询速度：星型关联表少，检索维度速度快；雪花需要多表JOIN连接，检索速度更慢。",
-                        score:8
-                    },
-                    {
-                        q:"简述三种OLAP优化索引及各自作用",
-                        ans:"1.位图索引：二进制串替代列取值，不修改原始数据，快速匹配检索，提升查询效率；\n2.广义索引：通用查询加速索引，整体提升检索速度；\n3.连接索引：预存储多表关联匹配结果，减少多表JOIN运算耗时，提升多表连接性能。",
-                        score:8
-                    }
-                ],
-                calc:[],
-                review:[]
-            },
-            {
-                module:"模块4 贝叶斯分类模型、贝叶斯信念网络",
-                single:[
-                    {
-                        q:"朴素贝叶斯分类器核心假设是（）",
-                        opts:["A. 属性之间存在树形依赖","B. 所有属性相互独立，无依赖关系","C. 不同类别网络结构不同","D. 仅允许单个属性依赖"],
-                        ans:"B",
-                        score:1
-                    },
-                    {
-                        q:"贝叶斯信念网络两大核心组成是（）",
-                        opts:["A. DAG有向无环图 + CPT条件概率表","B. 距离函数 + 相似度公式","C. 质心 + 簇划分规则","D. 抽样规则 + 离散化方法"],
-                        ans:"A",
-                        score:1
-                    }
-                ],
-                short:[
-                    {
-                        q:"写出四种贝叶斯分类器，并分别说明核心假设/特点",
-                        ans:"1.朴素贝叶斯分类器：最简单高效；假设全部属性相互独立，无依赖关系；\n2.TAN树扩展朴素贝叶斯：放宽独立假设，允许条件属性间存在依赖；\n3.贝武式增强网络朴素贝叶斯：树形结构，属性间存在贝叶斯网络树形关联；\n4.贝叶斯多网（TANB）：不同类别共用一套网络结构；不同属性取值下，变量关联关系存在差异。",
-                        score:8
-                    },
-                    {
-                        q:"简述贝叶斯信念网络定义、两大组成及CPT三类概率存储形式",
-                        ans:"定义：一种概率网络，基于概率推理数学模型，用于解决复杂系统的不确定性、不完整数据问题。\n两大组成：①有向无环图DAG：用图结构描述变量之间的因果依赖关系；②条件概率表CPT：存储节点对应概率分布。\nCPT三类：①无父节点：仅存储先验概率p(X)；②单个父节点：存储条件概率p(X|Y)；③多个父节点：存储多条件联合概率p(X|Y₁,Y₂,…,Yₙ)。",
-                        score:8
-                    }
-                ],
-                calc:[],
-                review:[]
-            },
-            {
-                module:"模块5 聚类算法基础、K-Means、K-Prototypes",
-                single:[
-                    {
-                        q:"K-Means适合处理哪种形状的簇（）",
-                        opts:["A. 非球状不规则簇","B. 类球状凸形簇","C. 带状、环状簇","D. 任意形状簇"],
-                        ans:"B",
-                        score:1
-                    },
-                    {
-                        q:"能处理数值+分类混合属性的原型聚类算法是（）",
-                        opts:["A. K-Means","B. DBSCAN","C. K-Prototypes","D. 朴素贝叶斯"],
-                        ans:"C",
-                        score:1
-                    },
-                    {
-                        q:"下列不属于聚类八大性能要求的是（）",
-                        opts:["A. 高维数据处理能力","B. 噪声数据处理能力","C. 自动生成标签能力","D. 任意形状簇识别能力"],
-                        ans:"C",
-                        score:1
-                    }
-                ],
-                short:[
-                    {
-                        q:"简述簇的两种形状、两类簇间关系、聚类八大性能评价标准",
-                        ans:"一、簇形状：\n①类球状（凸形）簇：依靠距离类算法（K-Means）生成；\n②非球状簇：采用基于密度、原型聚类算法处理。\n二、簇间关系：\n①理想明显分离簇：簇内任意样本距离小于簇间距离，可用阈值划定边界；\n②适配不规则数据簇：基于原型、连片、密度三类簇，适配复杂形状数据。\n三、八大性能要求：\n1.数据集可伸缩能力 2.混合属性处理能力 3.发现任意形状簇能力 4.K参数自适应\n5.噪声处理能力 6.输入顺序适应能力 7.高维数据处理 8.带约束聚类能力。",
-                        score:8
-                    },
-                    {
-                        q:"简述K-Means算法定义、距离四条公理、相似度公式、五步迭代流程",
-                        ans:"定义：经典划分式聚类，使用欧氏距离衡量相似度；距离越大样本相似度越低；优化目标最小化簇内距离平方和SSE。\n距离dist四条公理：\n1.非负性 2.dist(oi,oj)=0当且仅当oi=oj 3.对称性dist(oi,oj)=dist(oj,oi) 4.三角不等式dist(oi,oj) ≤ dist(oi,ok)+dist(ok,oj)\n相似度公式：sim(oi,oj) = 1 / (1 + dist(oi,oj))\n五步流程：\n①输入聚类数K与数据集；②随机选取K个样本作为初始簇质心；\n③计算每个样本到全部质心距离，划分至最近质心对应簇；\n④按簇内样本均值重新计算新质心；\n⑤循环3-4步，更新簇内距离平方和直至函数收敛。",
-                        score:8
-                    },
-                    {
-                        q:"简述K-Means优缺点",
-                        ans:"优点：①框架简单清晰，容易理解；②划分最小化平方误差，聚类效果稳定；③处理大数据集可伸缩，运算高效。\n缺点：①对聚类参数K十分敏感；②对噪声、离群异常数据敏感；③需要手动给定初始划分质心；④需要反复迭代分配样本，计算量大。",
-                        score:8
-                    },
-                    {
-                        q:"简述K-Prototypes适用场景、数学定义、缺点",
-                        ans:"适用场景：处理同时包含数值、分类的混合属性数据集。\n数学定义：数据集S={x₁,x₂…xₙ}；xi={xi1…xid}为d维混合属性数据对象。\n缺点：①初始原型选取敏感；②聚类分辨率低；③迭代过程容易产生空簇。",
-                        score:8
-                    },
-                    {
-                        q:"对比K-Means与K-Prototypes的相同点与不同点",
-                        ans:"相同点：均属于基于原型的划分聚类；仅适配类球形簇；需提前指定K值；依赖初始中心点/原型；抗噪声能力弱，易生成空簇。\n不同点：K-Means仅支持纯数值型数据；K-Prototypes拓展支持数值+分类混合属性数据。",
-                        score:8
-                    }
-                ],
-                calc:[],
-                review:[]
-            }
-        ];
-
-        let currentPaperData = [];
-
-        // 随机生成一套试卷：固定抽取数量 单选20、简答5、计算2、综述1
-        function randomPaper(){
-            const container = document.getElementById("paper-container");
-            document.getElementById("scoreShow").innerText = "";
-            let html = "";
-            currentPaperData = [];
-            // 收集所有题目
-            let allSingle = [];
-            let allShort = [];
-            let allCalc = [];
-            let allReview = [];
-            questionBank.forEach(module=>{
-                if(module.single) allSingle.push(...module.single);
-                if(module.short) allShort.push(...module.short);
-                if(module.calc) allCalc.push(...module.calc);
-                if(module.review) allReview.push(...module.review);
-            });
-            // 打乱并截取指定数量
-            allSingle.sort(()=>Math.random()-0.5);
-            const pickSingle = allSingle.slice(0,20); // 单选固定20道
-            allShort.sort(()=>Math.random()-0.5);
-            const pickShort = allShort.slice(0,5);    // 简答固定5道
-            allCalc.sort(()=>Math.random()-0.5);
-            const pickCalc = allCalc.slice(0,2);      // 计算随机2道（题库6道轮换）
-            allReview.sort(()=>Math.random()-0.5);
-            const pickReview = allReview.slice(0,1);  // 综述随机1道（题库5道轮换）
-
-            let globalNo = 1; // 全局连续题号，不重复
-
-            // 1. 单项选择题
-            html += `<h2>一、单项选择题（每题1分，共20分）</h2>`;
-            pickSingle.forEach(item=>{
-                let uid = `single-${globalNo}`;
-                currentPaperData.push({type:"single",uid,item});
-                html += `<div class="q-block">
-                    <p>${globalNo}. ${item.q}</p>`;
-                item.opts.forEach((opt,oIdx)=>{
-                    let val = String.fromCharCode(65+oIdx);
-                    html += `<p class="radio-item">
-                        <input type="radio" name="${uid}" value="${val}" id="${uid}_${val}">
-                        <label for="${uid}_${val}">${opt}</label>
-                    </p>`;
-                })
-                html += `<div class="answer-wrap">
-                    <button class="show-ans-btn" onclick="toggleAns('${uid}')">显示标准答案</button>
-                    <div class="answer" id="${uid}">标准答案：${item.ans}</div>
-                </div></div>`;
-                globalNo++;
-            });
-
-            // 2. 简答题
-            html += `<h2>二、简答题（每题8分，共40分）</h2>`;
-            pickShort.forEach(item=>{
-                let uid = `short-${globalNo}`;
-                currentPaperData.push({type:"short",uid,item});
-                html += `<div class="q-block">
-                    <p>${globalNo}. ${item.q}</p>
-                    <div class="user-ans-box">
-                        <textarea id="user_${uid}" placeholder="请在此填写你的答案"></textarea>
-                    </div>
-                    <div class="answer-wrap">
-                        <button class="show-ans-btn" onclick="toggleAns('${uid}')">显示参考答案</button>
-                        <div class="answer" id="${uid}">参考答案：${item.ans}</div>
-                    </div>
-                </div>`;
-                globalNo++;
-            });
-
-            // 3. 计算题
-            html += `<h2>三、计算题（每题10分，共20分）</h2>`;
-            pickCalc.forEach(item=>{
-                let uid = `calc-${globalNo}`;
-                currentPaperData.push({type:"calc",uid,item});
-                html += `<div class="q-block">
-                    <p>${globalNo}. ${item.q}</p>
-                    <div class="user-ans-box">
-                        <textarea id="user_${uid}" placeholder="请在此写出计算过程与结果"></textarea>
-                    </div>
-                    <div class="answer-wrap">
-                        <button class="show-ans-btn" onclick="toggleAns('${uid}')">显示参考答案</button>
-                        <div class="answer" id="${uid}">参考答案：${item.ans}</div>
-                    </div>
-                </div>`;
-                globalNo++;
-            });
-
-            // 4. 综述题
-            html += `<h2>四、综述题（每题10分，共10分）</h2>`;
-            pickReview.forEach(item=>{
-                let uid = `review-${globalNo}`;
-                currentPaperData.push({type:"review",uid,item});
-                html += `<div class="q-block">
-                    <p>${globalNo}. ${item.q}</p>
-                    <div class="user-ans-box">
-                        <textarea id="user_${uid}" placeholder="请在此完整作答"></textarea>
-                    </div>
-                    <div class="answer-wrap">
-                        <button class="show-ans-btn" onclick="toggleAns('${uid}')">显示参考答案</button>
-                        <div class="answer" id="${uid}">参考答案：${item.ans}</div>
-                    </div>
-                </div>`;
-                globalNo++;
-            });
-
-            container.innerHTML = html;
-        }
-
-        // 切换答案显示隐藏
-        function toggleAns(id){
-            const dom = document.getElementById(id);
-            dom.style.display = dom.style.display === "block" ? "none" : "block";
-        }
-
-        // 计算总分（简答/计算/综述：输入超过5字符满分，否则0分）
-        function calcTotalScore(){
-            let total = 0;
-            let tipText = "";
-            currentPaperData.forEach(que=>{
-                const item = que.item;
-                if(que.type === "single"){
-                    const radios = document.getElementsByName(que.uid);
-                    let selectVal = "";
-                    radios.forEach(r=>{if(r.checked) selectVal = r.value;});
-                    if(selectVal === item.ans){
-                        total += item.score;
-                        tipText += `<p class="right">${que.item.q}：回答正确，+${item.score}分</p>`;
-                    }else{
-                        tipText += `<p class="wrong">${que.item.q}：回答错误，正确答案${item.ans}</p>`;
-                    }
-                }else if(["short","calc","review"].includes(que.type)){
-                    const userText = document.getElementById("user_"+que.uid).value.trim();
-                    if(userText.length > 5){
-                        total += item.score;
-                        tipText += `<p class="right">${que.item.q}：已作答，默认满分+${item.score}分（人工核对细节）</p>`;
-                    }else{
-                        tipText += `<p class="wrong">${que.item.q}：未填写完整，0分</p>`;
-                    }
-                }
-            })
-            document.getElementById("scoreShow").innerHTML = `
-                <div>你的本次总分：${total} / 100</div>
-                <div style="font-size:16px;margin-top:10px;">${tipText}</div>
-            `;
-        }
-
-        window.onload = randomPaper;
-    </script>
+    <div class="content-card">
+        <div id="overview" class="page active"></div>
+        <div id="cards" class="page"></div>
+        <div id="code-kp" class="page"></div>
+        <div id="quiz" class="page"></div>
+        <div id="wrong" class="page"></div>
+        <div id="progress" class="page"></div>
+    </div>
+</div>
+<div class="card-modal" id="cardModal">
+    <div class="modal-content">
+        <div class="modal-header"><h3>📋 答题卡</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
+        <div class="card-grid" id="cardGrid"></div>
+        <div class="card-stats" id="cardStats"></div>
+    </div>
+</div>
+<div class="options-popup" id="optionsPopup"></div>
+<script>
+const questions = [{"id": 1, "type": "choice", "chapter": 1, "topic": "上下文对象", "q": "以下哪个属于Flask的应用上下文?", "opts": ["request", "session", "g", "以上都是"], "ans": 2, "exp": ""}, {"id": 2, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "Flask是一个什么类型的框架?", "opts": ["全栈框架", "微框架", "大数据框架", "前端框架"], "ans": 1, "exp": ""}, {"id": 3, "type": "choice", "chapter": 3, "topic": "模板引擎", "q": "Flask默认依赖哪两个外部库?", "opts": ["Django和Tornado", "Werkzeug和Jinja2", "Requests和BeautifulSoup", "NumPy和Pandas"], "ans": 1, "exp": ""}, {"id": 4, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "Flask自带的开发服务器默认运行在哪个端口?", "opts": ["8080", "3000", "5000", "8000"], "ans": 2, "exp": ""}, {"id": 5, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "在Flask中，创建Flask类对象时需要传入的参数是?", "opts": ["__name__", "__main__", "__file__", "__path__"], "ans": 0, "exp": ""}, {"id": 6, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "Flask程序的调试模式默认是?", "opts": ["开启", "关闭", "取决于系统", "随机"], "ans": 1, "exp": ""}, {"id": 7, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "以下哪个不是Flask的特点?", "opts": ["使用Jinja2模板", "完全兼容WSGI 1.0标准", "内置ORM框架", "极强的定制型"], "ans": 2, "exp": ""}, {"id": 8, "type": "choice", "chapter": 3, "topic": "模板引擎", "q": "Jinja2模板引擎的主要作用是?", "opts": ["处理数据库操作", "生成HTML页面", "处理用户认证", "处理网络请求"], "ans": 1, "exp": ""}, {"id": 9, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "Flask中用于启动开发服务器的方法是?", "opts": ["app.start(        )", "app.run(        )", "app.serve(        )", "app.launch(        )"], "ans": 1, "exp": ""}, {"id": 10, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "在Flask程序中，启用调试模式可以通过设置哪个参数?", "opts": ["debug=True", "mode=debug", "develop=True", "test=True"], "ans": 0, "exp": ""}, {"id": 11, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "Flask的run()方法中，host参数默认值为?", "opts": ["0.0.0.0", "127.0.0.1", "localhost", "B和C都对"], "ans": 3, "exp": ""}, {"id": 12, "type": "choice", "chapter": 1, "topic": "配置管理", "q": "以下哪个是Flask配置项的正确使用方式?", "opts": ["app.config('DEBUG') = True", "app.config['DEBUG'] = True", "app.debug = True", "app.set_config('DEBUG', True)"], "ans": 1, "exp": ""}, {"id": 13, "type": "choice", "chapter": 1, "topic": "配置管理", "q": "Flask中用于设置密钥的配置项是?", "opts": ["SECRET_CODE", "SECRET_KEY", "SECRET_TOKEN", "APP_KEY"], "ans": 1, "exp": ""}, {"id": 14, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "以下哪个命令可以安装Flask?", "opts": ["pip install flask", "pip install Flask", "python install flask", "A和B都对"], "ans": 3, "exp": ""}, {"id": 15, "type": "choice", "chapter": 1, "topic": "虚拟环境", "q": "virtualenv工具的主要作用是?", "opts": ["创建虚拟环境", "安装Flask", "启动服务器", "调试程序"], "ans": 0, "exp": ""}, {"id": 16, "type": "choice", "chapter": 1, "topic": "虚拟环境", "q": "激活虚拟环境的命令是?", "opts": ["activate", "start_env", "run_env", "env_start"], "ans": 0, "exp": ""}, {"id": 17, "type": "choice", "chapter": 2, "topic": "路由与请求", "q": "在Flask中，用于注册路由的装饰器是?", "opts": ["@app.url(        )", "@app.route(        )", "@app.view(        )", "@app.path(        )"], "ans": 1, "exp": ""}, {"id": 18, "type": "choice", "chapter": 2, "topic": "路由与请求", "q": "以下哪个是Flask中注册路由的另一种方法?", "opts": ["app.map_rule(        )", "app.add_url_rule(        )", "app.register(        )", "app.bind(        )"], "ans": 1, "exp": ""}, {"id": 19, "type": "choice", "chapter": 2, "topic": "路由与请求", "q": "在URL规则中，用于标记动态参数的语法是?", "opts": ["[param]", "{param}", "<param>", "(param)"], "ans": 2, "exp": ""}, {"id": 20, "type": "choice", "chapter": 2, "topic": "路由与请求", "q": "以下哪个内置转换器用于匹配整数类型的URL参数?", "opts": ["string", "int", "float", "number"], "ans": 1, "exp": ""}, {"id": 21, "type": "choice", "chapter": 2, "topic": "路由与请求", "q": "在Flask中，默认的请求方法是?", "opts": ["POST", "PUT", "GET", "DELETE"], "ans": 2, "exp": ""}, {"id": 22, "type": "choice", "chapter": 2, "topic": "路由与请求", "q": "在route()装饰器中，指定请求方式的参数是?", "opts": ["methods", "ways", "request_methods", "http_methods"], "ans": 0, "exp": ""}, {"id": 23, "type": "choice", "chapter": 2, "topic": "路由与请求", "q": "Flask中用于页面重定向的函数是?", "opts": ["redirect(        )", "redirection(        )", "forward(        )", "jump(        )"], "ans": 0, "exp": ""}, {"id": 24, "type": "choice", "chapter": 2, "topic": "请求钩子", "q": "以下哪个请求钩子在请求开始之前执行?", "opts": ["after_request", "before_request", "teardown_request", "before_first_request"], "ans": 1, "exp": ""}, {"id": 25, "type": "choice", "chapter": 2, "topic": "路由与请求", "q": "Flask中用于反向解析URL的函数是?", "opts": ["url_resolve(        )", "url_parse(        )", "url_for(        )", "url_reverse(        )"], "ans": 2, "exp": ""}, {"id": 26, "type": "choice", "chapter": 1, "topic": "上下文对象", "q": "以下哪个不属于Flask的请求上下文?", "opts": ["request", "session", "current_app", "以上都是"], "ans": 2, "exp": ""}, {"id": 27, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "Flask中用于获取请求信息的对象是?", "opts": ["app", "request", "response", "context"], "ans": 1, "exp": ""}, {"id": 28, "type": "choice", "chapter": 2, "topic": "URL工具", "q": "redirect()函数默认的重定向状态码是?", "opts": ["200", "301", "302", "404"], "ans": 2, "exp": ""}, {"id": 29, "type": "choice", "chapter": 3, "topic": "模板继承", "q": "自定义转换器需要继承哪个类?", "opts": ["BaseConverter", "Converter", "UrlConverter", "RouteConverter"], "ans": 0, "exp": ""}, {"id": 30, "type": "choice", "chapter": 2, "topic": "URL工具", "q": "url_for()函数的第一个参数是?", "opts": ["URL地址", "视图函数名", "路由规则", "端点名称"], "ans": 3, "exp": ""}, {"id": 31, "type": "choice", "chapter": 2, "topic": "路由与请求", "q": "以下哪个是Flask2.0版本中POST请求的快捷装饰器?", "opts": ["@app.get(        )", "@app.post(        )", "@app.put(        )", "@app.delete(        )"], "ans": 1, "exp": ""}, {"id": 32, "type": "choice", "chapter": 3, "topic": "模板引擎", "q": "Flask默认使用的模板引擎是?", "opts": ["DjangoTemplates", "Mako", "Jinja2", "Blade"], "ans": 2, "exp": ""}, {"id": 35, "type": "choice", "chapter": 3, "topic": "模板引擎", "q": "在Flask中，渲染模板的函数是?", "opts": ["render(        )", "render_template(        )", "load_template(        )", "show_template(        )"], "ans": 1, "exp": ""}, {"id": 36, "type": "choice", "chapter": 3, "topic": "模板引擎", "q": "Flask模板文件默认存放在哪个文件夹?", "opts": ["static", "templates", "views", "template"], "ans": 1, "exp": ""}, {"id": 37, "type": "choice", "chapter": 3, "topic": "过滤器", "q": "在Jinja2模板中，用于调用过滤器的符号是?", "opts": ["|", "&", "$", "#"], "ans": 0, "exp": ""}, {"id": 38, "type": "choice", "chapter": 3, "topic": "过滤器", "q": "以下哪个过滤器用于获取列表长度?", "opts": ["size", "len", "length", "count"], "ans": 2, "exp": ""}, {"id": 39, "type": "choice", "chapter": 3, "topic": "模板引擎", "q": "在Jinja2模板中，用于定义选择结构的关键字是?", "opts": ["if-else", "for", "with", "macro"], "ans": 0, "exp": ""}, {"id": 40, "type": "choice", "chapter": 3, "topic": "模板引擎", "q": "选择结构在Jinja2模板中必须以哪个关键字结尾?", "opts": ["{% end %}", "{% endif %}", "{% endfor %}", "{% endblock %}"], "ans": 1, "exp": ""}, {"id": 41, "type": "choice", "chapter": 3, "topic": "模板引擎", "q": "在Jinja2模板中，用于定义循环结构的关键字是?", "opts": ["if", "for", "while", "loop"], "ans": 1, "exp": ""}, {"id": 42, "type": "choice", "chapter": 3, "topic": "宏", "q": "在Jinja2模板中，用于定义宏的关键字是?", "opts": ["{% function %}", "{% method %}", "{% macro %}", "{% def %}"], "ans": 2, "exp": ""}, {"id": 43, "type": "choice", "chapter": 3, "topic": "消息闪现", "q": "消息闪现函数flash()的参数category默认值是?", "opts": ["error", "info", "warning", "message"], "ans": 3, "exp": ""}, {"id": 44, "type": "choice", "chapter": 3, "topic": "消息闪现", "q": "在模板中获取闪现消息的函数是?", "opts": ["get_flash(        )", "get_messages(        )", "get_flashed_messages(        )", "flash_messages(        )"], "ans": 2, "exp": ""}, {"id": 45, "type": "choice", "chapter": 3, "topic": "静态文件", "q": "静态文件默认存放在哪个文件夹?", "opts": ["templates", "static", "public", "assets"], "ans": 1, "exp": ""}, {"id": 46, "type": "choice", "chapter": 3, "topic": "静态文件", "q": "在模板中引用静态文件时，url_for()的第一个参数是?", "opts": ["'files'", "'static'", "'public'", "'assets'"], "ans": 1, "exp": ""}, {"id": 47, "type": "choice", "chapter": 3, "topic": "模板继承", "q": "在模板继承中，指定子模板继承的基模板使用哪个关键字?", "opts": ["{% include %}", "{% extends %}", "{% block %}", "{% inherit %}"], "ans": 1, "exp": ""}, {"id": 49, "type": "choice", "chapter": 3, "topic": "过滤器", "q": "以下哪个过滤器可以将字符串转换为大写?", "opts": ["lower", "upper", "capitalize", "title"], "ans": 1, "exp": ""}, {"id": 51, "type": "choice", "chapter": 3, "topic": "模板继承", "q": "在模板继承中，子模板需要覆盖基模板中的代码块，以下哪个写法正确?", "opts": ["text", "text", "text", "text"], "ans": 1, "exp": ""}, {"id": 52, "type": "choice", "chapter": 3, "topic": "消息闪现", "q": "以下哪个函数用于在Flask中实现消息闪现功能?", "opts": ["message(        )", "flash(        )", "notify(        )", "alert(        )"], "ans": 1, "exp": ""}, {"id": 53, "type": "choice", "chapter": 3, "topic": "消息闪现", "q": "在模板中获取闪现消息时，若需要同时获取消息类别和消息内容，应将with_categories参数设置为?", "opts": ["True", "False", "1", "0"], "ans": 0, "exp": ""}, {"id": 54, "type": "choice", "chapter": 3, "topic": "宏", "q": "以下哪个选项是Jinja2模板中定义宏的正确语法?", "opts": ["text", "text", "text", "text"], "ans": 1, "exp": ""}, {"id": 55, "type": "choice", "chapter": 3, "topic": "宏", "q": "在模板中导入另一个模板文件中定义的宏，以下哪个写法正确?", "opts": ["{% import 'macro.html' %}", "{% include 'macro.html' %}", "{% from 'macro.html' import input %}", "{% load 'macro.html' %}"], "ans": 2, "exp": ""}, {"id": 56, "type": "choice", "chapter": 3, "topic": "模板引擎", "q": "在Jinja2模板中，若要获取循环的当前索引(从0开始)，应使用以下哪个特殊变量?", "opts": ["loop.index", "loop.index0", "loop.count", "loop.first"], "ans": 1, "exp": ""}, {"id": 57, "type": "choice", "chapter": 4, "topic": "表单处理", "q": "Flask-WTF扩展包用于处理什么?", "opts": ["数据库操作", "表单处理", "路由管理", "模板渲染"], "ans": 1, "exp": ""}, {"id": 58, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "安装Flask-WTF扩展包的命令是?", "opts": ["pip install flask-wtf", "pip install Flask-WTF", "pip install wtforms", "A和B都对"], "ans": 3, "exp": ""}, {"id": 59, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "Flask-WTF中创建表单类需要继承哪个类?", "opts": ["Form", "WTForm", "FlaskForm", "BaseForm"], "ans": 2, "exp": ""}, {"id": 60, "type": "choice", "chapter": 4, "topic": "表单处理", "q": "以下哪个字段类用于创建文本输入框?", "opts": ["TextField", "StringField", "TextInputField", "CharField"], "ans": 1, "exp": ""}, {"id": 61, "type": "choice", "chapter": 4, "topic": "表单处理", "q": "以下哪个字段类用于创建密码输入框?", "opts": ["PasswordInput", "PasswordField", "SecretField", "PwdField"], "ans": 1, "exp": ""}, {"id": 62, "type": "choice", "chapter": 4, "topic": "表单处理", "q": "以下哪个字段类用于创建提交按钮?", "opts": ["ButtonField", "SubmitField", "SubmitButton", "SendField"], "ans": 1, "exp": ""}, {"id": 63, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "FlaskForm中用于验证表单数据的方法?", "opts": ["form.check(        )", "form.is_valid(        )", "form.validate_on_submit(        )", "form.verify(        )"], "ans": 2, "exp": ""}, {"id": 65, "type": "choice", "chapter": 3, "topic": "模板继承", "q": "Flask中标准类视图需要继承哪个类?", "opts": ["View", "MethodView", "BaseView", "FlaskView"], "ans": 0, "exp": ""}, {"id": 66, "type": "choice", "chapter": 2, "topic": "类视图", "q": "标准类视图中必须重写的方法是?", "opts": ["get(        )", "post(        )", "dispatch_request(        )", "handle_request(        )"], "ans": 2, "exp": ""}, {"id": 67, "type": "choice", "chapter": 3, "topic": "模板继承", "q": "基于请求方法的类视图需要继承哪个类?", "opts": ["View", "MethodView", "BaseView", "FlaskView"], "ans": 1, "exp": ""}, {"id": 68, "type": "choice", "chapter": 2, "topic": "类视图", "q": "将类视图转换为视图函数的方法是?", "opts": ["to_view(        )", "as_view(        )", "get_view(        )", "create_view(        )"], "ans": 1, "exp": ""}, {"id": 69, "type": "choice", "chapter": 2, "topic": "路由与请求", "q": "Flask中用于实现模块化路由的技术是?", "opts": ["类视图", "蓝图", "模块", "包"], "ans": 1, "exp": ""}, {"id": 70, "type": "choice", "chapter": 2, "topic": "蓝图", "q": "注册蓝图的方法是?", "opts": ["app.register(        )", "app.register_blueprint(        )", "app.add_blueprint(        )", "app.use_blueprint(        )"], "ans": 1, "exp": ""}, {"id": 71, "type": "choice", "chapter": 2, "topic": "蓝图", "q": "在注册蓝图时，用于统一添加URL前缀的参数是?", "opts": ["prefix", "url_prefix", "route_prefix", "path_prefix"], "ans": 1, "exp": ""}, {"id": 72, "type": "choice", "chapter": 8, "topic": "数据库连接", "q": "Flask中操作关系型数据库的扩展包是?", "opts": ["Flask-DB", "Flask-SQLAlchemy", "Flask-ORM", "Flask-MySQL"], "ans": 1, "exp": ""}, {"id": 73, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "SQLAlchemy是使用哪种语言实现的框架?", "opts": ["Java", "C++", "Python", "PHP"], "ans": 2, "exp": ""}, {"id": 74, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "ORM的全称是?", "opts": ["Object Relational Mapping", "Object Request Mapping", "Object Relation Model", "Object Routing Mapping"], "ans": 0, "exp": ""}, {"id": 75, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "在Flask-SQLAlchemy中，模型类需要继承哪个类?", "opts": ["db.Base", "db.Model", "db.Table", "db.Entity"], "ans": 1, "exp": ""}, {"id": 76, "type": "choice", "chapter": 8, "topic": "数据库连接", "q": "用于指定数据库连接的配置项是?", "opts": ["SQLALCHEMY_DATABASE", "SQLALCHEMY_CONNECT", "SQLALCHEMY_DATABASE_URI", "SQLALCHEMY_URI"], "ans": 2, "exp": ""}, {"id": 77, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "创建数据表的方法是?", "opts": ["db.create(        )", "db.create_table(        )", "db.create_all(        )", "db.init_db(        )"], "ans": 2, "exp": ""}, {"id": 78, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "删除所有数据表的方法是?", "opts": ["db.drop(        )", "db.drop_table(        )", "db.drop_all(        )", "db.delete_all(        )"], "ans": 2, "exp": ""}, {"id": 79, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "在模型类中，用于定义字段的类是?", "opts": ["db.Field", "db.Column", "db.Row", "db.Attribute"], "ans": 1, "exp": ""}, {"id": 80, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "用于指定字段为主键的参数是?", "opts": ["key", "primary", "primary_key", "main_key"], "ans": 2, "exp": ""}, {"id": 81, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "用于指定字段为唯一的参数是?", "opts": ["only", "single", "unique", "one"], "ans": 2, "exp": ""}, {"id": 82, "type": "choice", "chapter": 6, "topic": "关系映射", "q": "表示一对多关系时，外键应该定义在哪一侧?", "opts": ["\"一\"侧", "\"多\"侧", "两侧都要", "中间表"], "ans": 1, "exp": ""}, {"id": 83, "type": "choice", "chapter": 6, "topic": "关系映射", "q": "在多对多关系中，需要使用哪个类创建关联表?", "opts": ["db.Model", "db.Table", "db.Relationship", "db.Link"], "ans": 1, "exp": ""}, {"id": 84, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "添加单条记录到数据库会话的方法是?", "opts": ["db.session.add(        )", "db.session.add_one(        )", "db.session.insert(        )", "db.session.save(        )"], "ans": 0, "exp": ""}, {"id": 85, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "提交数据库会话的方法是?", "opts": ["db.session.submit(        )", "db.session.push(        )", "db.session.commit(        )", "db.session.flush(        )"], "ans": 2, "exp": ""}, {"id": 86, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "查询所有记录的方法是?", "opts": ["Model.query.get_all(        )", "Model.query.all(        )", "Model.query.select(        )", "Model.query.fetch(        )"], "ans": 1, "exp": ""}, {"id": 87, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "删除记录的方法是?", "opts": ["db.session.remove(        )", "db.session.delete(        )", "db.session.drop(        )", "db.session.del(        )"], "ans": 1, "exp": ""}, {"id": 88, "type": "judge", "chapter": 3, "topic": "模板引擎", "q": "Flask默认依赖Werkzeug和Jinja2两个外部库。", "ans": true, "exp": ""}, {"id": 89, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "Flask自带开发服务器默认运行在8080端口。", "ans": false, "exp": ""}, {"id": 90, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "Flask程序的调试模式默认是开启的。", "ans": false, "exp": ""}, {"id": 91, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "Flask完全兼容WSGI 1.0标准。", "ans": true, "exp": ""}, {"id": 92, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "Flask中创建Flask类对象时需要传入的参数是__name__。", "ans": true, "exp": ""}, {"id": 93, "type": "judge", "chapter": 1, "topic": "配置管理", "q": "Flask程序的配置项可以通过app.config['配置项名']进行设置。", "ans": true, "exp": ""}, {"id": 94, "type": "judge", "chapter": 1, "topic": "虚拟环境", "q": "virtualenv工具用于安装Flask扩展包。", "ans": false, "exp": ""}, {"id": 95, "type": "judge", "chapter": 6, "topic": "SQLAlchemy", "q": "Flask是一个全栈Web框架，内置了ORM功能。", "ans": false, "exp": ""}, {"id": 96, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "在Flask中，可以通过pip install flask命令安装Flask框架。", "ans": true, "exp": ""}, {"id": 97, "type": "judge", "chapter": 2, "topic": "路由与请求", "q": "在Flask中，只有route()装饰器可以注册路由。", "ans": false, "exp": ""}, {"id": 98, "type": "judge", "chapter": 2, "topic": "路由与请求", "q": "URL规则中的动态参数需要使用尖括号<>包裹。", "ans": true, "exp": ""}, {"id": 99, "type": "judge", "chapter": 2, "topic": "路由与请求", "q": "Flask中内置转换器int用于匹配浮点数类型的参数。", "ans": false, "exp": ""}, {"id": 100, "type": "judge", "chapter": 2, "topic": "路由与请求", "q": "Flask程序中视图函数默认支持的请求方式是POST。", "ans": false, "exp": ""}, {"id": 101, "type": "judge", "chapter": 2, "topic": "URL工具", "q": "redirect()函数默认的重定向状态码是302。", "ans": true, "exp": ""}, {"id": 102, "type": "judge", "chapter": 2, "topic": "URL工具", "q": "url_for()函数可以根据视图函数名反向解析出对应的URL。", "ans": true, "exp": ""}, {"id": 103, "type": "judge", "chapter": 1, "topic": "上下文对象", "q": "Flask中的请求上下文包括request对象和current_app对象。", "ans": false, "exp": ""}, {"id": 104, "type": "judge", "chapter": 3, "topic": "模板继承", "q": "自定义转换器需要继承werkzeug.routing模块中的BaseConverter类。", "ans": true, "exp": ""}, {"id": 105, "type": "judge", "chapter": 2, "topic": "请求钩子", "q": "before_request请求钩子会在每次请求之后执行。", "ans": false, "exp": ""}, {"id": 106, "type": "judge", "chapter": 2, "topic": "路由与请求", "q": "Flask2.0版本中提供了@app.post()快捷装饰器用于处理POST请求。", "ans": true, "exp": ""}, {"id": 107, "type": "judge", "chapter": 3, "topic": "模板引擎", "q": "Flask默认使用的模板引擎是DjangoTemplates。", "ans": false, "exp": ""}, {"id": 108, "type": "judge", "chapter": 3, "topic": "模板引擎", "q": "在Jinja2模板中，输出变量的语法是{{ variable 。", "ans": true, "exp": ""}, {"id": 109, "type": "judge", "chapter": 3, "topic": "模板引擎", "q": "在Jinja2模板中，编写逻辑代码的语法是{% logic %}。", "ans": true, "exp": ""}, {"id": 110, "type": "judge", "chapter": 3, "topic": "模板引擎", "q": "Flask中渲染模板的函数是render_template()。", "ans": true, "exp": ""}, {"id": 111, "type": "judge", "chapter": 3, "topic": "模板引擎", "q": "Flask模板文件默认存放在static文件夹中。", "ans": false, "exp": ""}, {"id": 112, "type": "judge", "chapter": 3, "topic": "过滤器", "q": "在Jinja2模板中，过滤器使用竖线|调用。", "ans": true, "exp": ""}, {"id": 113, "type": "judge", "chapter": 3, "topic": "模板引擎", "q": "在Jinja2模板中，选择结构必须以{% end %}结尾。", "ans": false, "exp": ""}, {"id": 114, "type": "judge", "chapter": 3, "topic": "消息闪现", "q": "消息闪现功能通过flash()函数和get_flashed_messages()函数实现。", "ans": true, "exp": ""}, {"id": 115, "type": "judge", "chapter": 3, "topic": "静态文件", "q": "静态文件需要存放在static文件夹中，并通过url_for('static', filename='文件路径')引用。", "ans": true, "exp": ""}, {"id": 116, "type": "judge", "chapter": 3, "topic": "模板继承", "q": "模板继承中，子模板使用{% include %}指定继承的基模板。", "ans": false, "exp": ""}, {"id": 117, "type": "judge", "chapter": 6, "topic": "CRUD操作", "q": "删除记录的方法是db.session.delete()。", "ans": true, "exp": ""}, {"id": 118, "type": "judge", "chapter": 6, "topic": "SQLAlchemy", "q": "提交数据库会话的方法是db.session.submit()。", "ans": false, "exp": ""}, {"id": 119, "type": "judge", "chapter": 6, "topic": "CRUD操作", "q": "添加记录到数据库的方法是db.session.add()。", "ans": true, "exp": ""}, {"id": 120, "type": "judge", "chapter": 6, "topic": "关系映射", "q": "多对多关系需要使用db.Table类创建关联表。", "ans": true, "exp": ""}, {"id": 121, "type": "judge", "chapter": 6, "topic": "关系映射", "q": "表示一对多关系时，外键应该定义在“一”侧。", "ans": false, "exp": ""}, {"id": 122, "type": "judge", "chapter": 6, "topic": "SQLAlchemy", "q": "在模型类中，db.Column类用于定义字段。", "ans": true, "exp": ""}, {"id": 123, "type": "judge", "chapter": 6, "topic": "SQLAlchemy", "q": "创建数据表的方法是db.create_all()。", "ans": true, "exp": ""}, {"id": 124, "type": "judge", "chapter": 6, "topic": "SQLAlchemy", "q": "在Flask-SQLAlchemy中，模型类需要继承db.Base类。", "ans": false, "exp": ""}, {"id": 125, "type": "judge", "chapter": 6, "topic": "关系映射", "q": "ORM的全称是Object Relational Mapping(对象关系映射)。", "ans": true, "exp": ""}, {"id": 126, "type": "judge", "chapter": 6, "topic": "关系映射", "q": "Flask-SQLAlchemy是Flask中用于操作关系型数据库的扩展包。", "ans": true, "exp": ""}, {"id": 127, "type": "judge", "chapter": 2, "topic": "蓝图", "q": "蓝图创建后可以直接运行，无需注册到Flask应用实例。", "ans": false, "exp": ""}, {"id": 128, "type": "judge", "chapter": 2, "topic": "蓝图", "q": "蓝图是一种模块化路由的技术，创建蓝图需要导入Blueprint类。", "ans": true, "exp": ""}, {"id": 129, "type": "judge", "chapter": 2, "topic": "类视图", "q": "基于请求方法的类视图可以通过定义get()、post()等方法处理不同请求。", "ans": true, "exp": ""}, {"id": 130, "type": "judge", "chapter": 3, "topic": "模板继承", "q": "标准类视图需要继承MethodView类。", "ans": false, "exp": ""}, {"id": 131, "type": "judge", "chapter": 6, "topic": "SQLAlchemy", "q": "在模板中需要使用{{ form.csrf_token }}渲染CSRF令牌。", "ans": true, "exp": ""}, {"id": 132, "type": "judge", "chapter": 4, "topic": "表单处理", "q": "validate_on_submit()方法用于验证表单数据是否通过验证。", "ans": true, "exp": ""}, {"id": 133, "type": "judge", "chapter": 4, "topic": "表单处理", "q": "StringField字段类用于创建密码输入框。", "ans": false, "exp": ""}, {"id": 134, "type": "judge", "chapter": 6, "topic": "SQLAlchemy", "q": "Flask-WTF中创建表单类需要继承Form类。", "ans": false, "exp": ""}, {"id": 135, "type": "judge", "chapter": 4, "topic": "表单处理", "q": "安装Flask-WTF的命令是pip install flask-wtf。", "ans": true, "exp": ""}, {"id": 136, "type": "judge", "chapter": 4, "topic": "表单处理", "q": "Flask-WTF是Flask中专门用于处理表单的扩展包。", "ans": true, "exp": ""}, {"id": 137, "type": "choice", "chapter": 7, "topic": "PyQt5基础", "q": "在计算机科学中，数据的范围包括（）", "opts": ["仅数字和文字", "能被计算机程序处理的符号介质", "仅模拟信号", "仅硬件设备"], "ans": 1, "exp": ""}, {"id": 138, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "以下哪项属于数据可视化的“模式”分析（）", "opts": ["发现交通流量变化的规律", "比较销售额与成本的关系", "检测错误输入的数据", "绘制公司组织结构图"], "ans": 0, "exp": ""}, {"id": 139, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "数据的定义是什么（）", "opts": ["仅指数字", "对客观事件记录并可识别的符号", "仅计算机中的二进制代码", "人类的主观感受"], "ans": 1, "exp": ""}, {"id": 140, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "数据可视化的核心目的是（）", "opts": ["使数据更复杂", "通过图形化手段传达信息", "仅用于艺术创作", "隐藏数据中的异常"], "ans": 1, "exp": ""}, {"id": 141, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "信息是未经加工处理的原始数据。", "ans": false, "exp": ""}, {"id": 142, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "发现交通流量变化的规律属于“模式”分析的范畴。", "ans": true, "exp": ""}, {"id": 143, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "数据可视化只需要注重美学形式，无需考虑功能。", "ans": false, "exp": ""}, {"id": 144, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "数据仅指数字。", "ans": false, "exp": ""}, {"id": 145, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "信息可视化中，树图主要用于哪种类型的数据（）", "opts": ["地理信息数据", "层次数据", "时变数据", "网络数据"], "ans": 1, "exp": ""}, {"id": 146, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "可视分析学的核心目标是什么（）", "opts": ["仅展示数据的美观性", "通过交互界面支持分析推理", "替代传统的数据挖掘方法", "专注于医学影像分析"], "ans": 1, "exp": ""}, {"id": 147, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "科学可视化和信息可视化的主要区别是什么（）", "opts": ["科学可视化处理结构化数据，信息可视化处理非结构化数据", "科学可视化处理非结构化数据，信息可视化处理结构化数据", "科学可视化关注几何和拓扑特征，信息可视化处理复杂高维数据", "科学可视化仅用于医学领域，信息可视化用于金融领域"], "ans": 2, "exp": ""}, {"id": 148, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "数据可视化的“艺术性”标准要求必须使用复杂的视觉效果，忽略实用性。", "ans": false, "exp": ""}, {"id": 149, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "科学可视化的处理对象主要是非结构化数据，如社交网络和文本数据。", "ans": false, "exp": ""}, {"id": 150, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "树图是层次数据可视化的典型案例，用于表达非层次结构的网络数据。", "ans": false, "exp": ""}, {"id": 151, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "颜色映射是将不同数值区间用颜色区分的一种科学可视化方法。", "ans": true, "exp": ""}, {"id": 152, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "达芬奇的人体解剖图属于数据可视化的哪种作用（）", "opts": ["分析推理", "信息传播与协同", "记录信息", "加密信息"], "ans": 2, "exp": ""}, {"id": 153, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "数据可视化在团队协作中的作用是（）", "opts": ["减少数据量", "促进数据交流", "隐藏敏感信息", "延长会议时间"], "ans": 1, "exp": ""}, {"id": 154, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "数据可视化的首要目标是（）", "opts": ["提高数据可读性", "美化数据呈现", "增加数据量", "加密数据"], "ans": 0, "exp": ""}, {"id": 155, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "John Snow的“伦敦鬼图”帮助解决了什么问题（）", "opts": ["交通拥堵", "霍乱爆发", "人口普查", "气候变化"], "ans": 1, "exp": ""}, {"id": 156, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "John Snow 通过绘制霍乱患者分布图，发现霍乱爆发与被污染的水泵有关。", "ans": true, "exp": ""}, {"id": 157, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "通过数据可视化无法直观看到数据的变化趋势和分布情况。", "ans": false, "exp": ""}, {"id": 158, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "数据可视化的目标之一是提高数据可读性，特别是针对大量数据场景。", "ans": true, "exp": ""}, {"id": 159, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "亨利·贝克设计的伦敦地铁图以实际距离比例来表现车站位置。", "ans": false, "exp": ""}, {"id": 160, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "数据可视化在金融领域的主要应用不包括以下哪一项（）", "opts": ["股票价格走势图", "多维度数据对比分析", "实时监控交通流量", "交易量动态监控"], "ans": 2, "exp": ""}, {"id": 161, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "在医疗健康领域，数据可视化技术可用于以下哪项（）", "opts": ["预测飓风发生时间", "分析药物疗效与副作用", "优化教育资源分布", "监测PM2.5浓度"], "ans": 1, "exp": ""}, {"id": 162, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "智慧城市中，数据可视化技术可实时监控以下哪项（）", "opts": ["患者血糖指标", "城市交通流量", "学生学习兴趣", "气候变化趋势"], "ans": 1, "exp": ""}, {"id": 163, "type": "choice", "chapter": 7, "topic": "PyQt5基础", "q": "疾病预测模型的可视化主要依赖哪两项技术（）", "opts": ["虚拟实验和远程教学", "大数据和机器学习", "交通流量分析和信号灯优化", "空气质量监测与水质分析"], "ans": 1, "exp": ""}, {"id": 164, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "虚拟实验室的远程实验教学功能会显著增加实验器材的消耗成本。", "ans": false, "exp": ""}, {"id": 165, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "数据可视化技术可以实时监控金融市场的交易量和涨跌幅等动态指标。", "ans": true, "exp": ""}, {"id": 166, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "气候变化趋势分析中，时间序列可视化通常使用饼图来展示气候数据。", "ans": false, "exp": ""}, {"id": 167, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "在医疗健康领域，数据可视化无法帮助医生比较不同药物的疗效和副作用。", "ans": false, "exp": ""}, {"id": 168, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "数据可视化的基础是以下哪个环节（）", "opts": ["用户感知", "数据采集", "可视化映射", "数据处理"], "ans": 1, "exp": ""}, {"id": 169, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "机器和传感器数据的特点不包括以下哪一项（）", "opts": ["量更大", "真实性", "类型更少", "更快速"], "ans": 2, "exp": ""}, {"id": 170, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "以下哪项是数据处理需要保证的特性（）", "opts": ["完整性、有效性、准确性", "颜色、形状、大小", "速度、真实性、类型", "灵感、感知、映射"], "ans": 0, "exp": ""}, {"id": 171, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "数据处理的目的是提高数据的什么特性（）", "opts": ["完整性和有效性", "美观性和复杂性", "随机性和冗余性", "主观性和模糊性"], "ans": 0, "exp": ""}, {"id": 172, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "可视化映射的核心是将数据关系映射到视觉通道（如颜色、形状）。", "ans": true, "exp": ""}, {"id": 173, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "社交媒体数据属于机器和传感器数据的一种。", "ans": false, "exp": ""}, {"id": 174, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "数据采集是数据可视化流程的基础环节。", "ans": true, "exp": ""}, {"id": 175, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "数据处理的主要目的是提高数据的美观性。", "ans": false, "exp": ""}, {"id": 176, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "类别型数据属性应使用哪种视觉通道编码（）", "opts": ["定序视觉通道", "分类型视觉通道", "颜色透明度", "动态交互"], "ans": 1, "exp": ""}, {"id": 177, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "“用一种事物理解和经历另一种事物”描述的是哪种概念（）", "opts": ["数据映射", "视觉通道", "隐喻", "交互设计"], "ans": 2, "exp": ""}, {"id": 178, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "数据可视化的基本原则中，以下哪项是展示信息量的关键要求（）", "opts": ["使用复杂视图", "展示适量信息", "仅展示文字", "隐藏所有细节"], "ans": 1, "exp": ""}, {"id": 179, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "视图交互设计不包括以下哪项（）", "opts": ["滚动与缩放", "数据筛选工具", "颜色映射控制", "隐藏数据细节"], "ans": 1, "exp": ""}, {"id": 180, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "在数据到可视化的映射中，有序型数据属性应使用分类型视觉通道编码。", "ans": false, "exp": ""}, {"id": 181, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "美学因素中的“平衡原则”建议将可视化元素集中在设计空间的边缘。", "ans": false, "exp": ""}, {"id": 182, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "数据可视化的“简单原则”要求设计者在图表中尽可能添加复杂元素以吸引用户注意力。", "ans": false, "exp": ""}, {"id": 183, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "可视化中的“隐喻”是指直接复制原始数据并展示给用户。", "ans": false, "exp": ""}, {"id": 184, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "当需要比较多个类别的数值大小时，最适合使用的图表是？", "opts": ["饼图", "堆积柱状图", "直方图", "散点图"], "ans": 1, "exp": ""}, {"id": 185, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "以下哪项是选择数据可视化图表时需要考虑的主要因素？", "opts": ["颜色搭配", "数据的类型和特点", "个人喜好", "视觉美感"], "ans": 1, "exp": ""}, {"id": 186, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "如果要分析两个变量之间的相关性，最适合的图表是？", "opts": ["散点图", "柱状图", "折线图", "词云图"], "ans": 0, "exp": ""}, {"id": 187, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "在可视化数据时，避免信息过载的方法是？", "opts": ["使用尽可能多的颜色", "避免过多的图表元素和标注", "在一张图表中展示所有数据", "仅使用3D图表"], "ans": 1, "exp": ""}, {"id": 188, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "颜色的使用可以增强数据可视化的效果，但过度使用可能会造成视觉混乱。", "ans": true, "exp": ""}, {"id": 189, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "折线图适用于展示离散类别数据的比较。", "ans": false, "exp": ""}, {"id": 190, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "3D图表通常比2D图表更容易阅读和理解。", "ans": false, "exp": ""}, {"id": 191, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "直方图和柱状图在数据展示方式上是完全相同的。", "ans": false, "exp": ""}, {"id": 192, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "在文本情感分析可视化中，常用的颜色表示方式是？", "opts": ["蓝色和绿色", "红色表示负面情绪，绿色表示正面情绪", "黑白两色", "黄色表示正面，灰色表示负面"], "ans": 1, "exp": ""}, {"id": 193, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "词云图的主要作用是？", "opts": ["展示文本之间的逻辑关系", "以大小和颜色突出关键词的重要性", "表示文本数据的时间序列趋势", "进行数据的层级分类"], "ans": 1, "exp": ""}, {"id": 194, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "以下哪种方法适用于展示文本数据的结构和层次？", "opts": ["旭日图", "词云图", "桑基图", "层次树图"], "ans": 3, "exp": ""}, {"id": 195, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "热力图可以用于展示不同文本类别的关键词分布。", "ans": true, "exp": ""}, {"id": 196, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "词云图适用于分析文本中单词的频率和重要性。", "ans": true, "exp": ""}, {"id": 197, "type": "judge", "chapter": 6, "topic": "关系映射", "q": "关系图适用于分析单词之间的共现关系。", "ans": true, "exp": ""}, {"id": 198, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "文本可视化只能用于社交媒体数据分析。", "ans": false, "exp": ""}, {"id": 199, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "以下哪项不属于常见的大数据可视化工具？", "opts": ["Tableau", "ECharts", "Photoshop", "D3.js"], "ans": 2, "exp": ""}, {"id": 200, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "大数据可视化开发的主要目的是？", "opts": ["提供美观的网页界面", "让用户能够更直观地理解数据", "仅用于数据存储", "仅用于图形设计"], "ans": 1, "exp": ""}, {"id": 201, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "Web 可视化开发通常使用哪种技术栈？", "opts": ["HTML + CSS + JavaScript", "C++ + Python", "Java + Swift", "Excel + PowerPoint"], "ans": 0, "exp": ""}, {"id": 202, "type": "choice", "chapter": 9, "topic": "Pyecharts", "q": "以下哪个 JavaScript 库主要用于数据驱动的文档可视化？", "opts": ["React", "D3.js", "Bootstrap", "Vue.js"], "ans": 1, "exp": ""}, {"id": 203, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "可视化开发仅适用于前端开发者。", "ans": false, "exp": ""}, {"id": 204, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "在可视化开发中，JSON 比 XML 更常用。", "ans": true, "exp": ""}, {"id": 205, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "可视化开发不需要数据处理，只关注界面设计。", "ans": false, "exp": ""}, {"id": 206, "type": "judge", "chapter": 9, "topic": "Pyecharts", "q": "ECharts 是由百度开源的一款前端可视化库。", "ans": true, "exp": ""}, {"id": 207, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "Flask 主要使用哪种编程语言？", "opts": ["Java", "Python", "JavaScript", "C++"], "ans": 1, "exp": ""}, {"id": 208, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "Flask 框架的设计理念是？", "opts": ["追求高性能，但结构复杂", "轻量级、灵活，可扩展", "仅适用于大型 Web 应用", "只能用于 REST API 开发"], "ans": 1, "exp": ""}, {"id": 209, "type": "choice", "chapter": 2, "topic": "路由与请求", "q": "在 Flask 中，定义一个路由时使用哪个装饰器？", "opts": ["@app.route()", "@flask.route()", "@route()", "@app.url()"], "ans": 0, "exp": ""}, {"id": 210, "type": "choice", "chapter": 3, "topic": "模板引擎", "q": "Flask 的默认模板引擎是什么？", "opts": ["Jinja2", "Django Templates", "Mako", "Pug"], "ans": 0, "exp": ""}, {"id": 211, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "Flask 适用于快速开发 Web API。", "ans": true, "exp": ""}, {"id": 212, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "Flask 需要依赖 Django 才能运行。", "ans": false, "exp": ""}, {"id": 213, "type": "judge", "chapter": 6, "topic": "SQLAlchemy", "q": "Flask 允许使用 SQLAlchemy 作为 ORM 进行数据库管理。", "ans": true, "exp": ""}, {"id": 214, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "Flask 遵循 WSGI 规范，可以与多个 WSGI 服务器配合使用。", "ans": true, "exp": ""}, {"id": 215, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "安装 Flask 的推荐方式是？", "opts": ["直接下载源码编译", "使用 pip 安装", "使用 apt-get 安装", "从浏览器运行"], "ans": 1, "exp": ""}, {"id": 216, "type": "choice", "chapter": 1, "topic": "虚拟环境", "q": "激活虚拟环境（macOS/Linux）的方法是？", "opts": ["venv/bin/activate", "venv\\Scripts\\activate", "python activate venv", "flask venv start"], "ans": 0, "exp": ""}, {"id": 217, "type": "choice", "chapter": 1, "topic": "虚拟环境", "q": "激活虚拟环境（Windows）的方法是？", "opts": ["venv/bin/activate", "source venv/bin/activate", "venv\\Scripts\\activate", "python activate venv"], "ans": 2, "exp": ""}, {"id": 218, "type": "choice", "chapter": 1, "topic": "虚拟环境", "q": "创建 Flask 虚拟环境的正确命令是？", "opts": ["flask create env", "virtualenv venv 或 python -m venv venv", "flask new venv", "pip install flask-venv"], "ans": 1, "exp": ""}, {"id": 219, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "默认情况下，Flask 运行时不会自动检测代码更改，需要手动重启。", "ans": true, "exp": ""}, {"id": 220, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "Flask 运行时，必须连接到数据库才能启动。", "ans": false, "exp": ""}, {"id": 221, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "使用 pip install flask 可以安装 Flask。", "ans": true, "exp": ""}, {"id": 222, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "Flask 只能运行在 Linux 系统上，不能在 Windows 上使用。", "ans": false, "exp": ""}, {"id": 223, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "安装 Flask 的正确命令是？", "opts": ["pip install flask", "flask install", "python install flask", "install flask"], "ans": 0, "exp": ""}, {"id": 224, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "如何启动 Flask 服务器？", "opts": ["flask run", "flask start", "python flask start", "flask server"], "ans": 0, "exp": ""}, {"id": 225, "type": "choice", "chapter": 1, "topic": "Flask基础", "q": "Flask 应用的默认端口号是？", "opts": ["5000", "8000", "8080", "3000"], "ans": 0, "exp": ""}, {"id": 228, "type": "judge", "chapter": 8, "topic": "SQLite", "q": "Flask 默认支持 SQLite 数据库。", "ans": false, "exp": ""}, {"id": 229, "type": "judge", "chapter": 3, "topic": "模板引擎", "q": "Flask 采用 Jinja2 作为模板渲染引擎。", "ans": true, "exp": ""}, {"id": 230, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "Flask 是一个基于 Python 的 Web 框架。", "ans": true, "exp": ""}, {"id": 231, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "使用 flask run 命令可以直接运行 Flask 应用。", "ans": true, "exp": ""}, {"id": 232, "type": "choice", "chapter": 1, "topic": "配置管理", "q": "Flask 中，配置项存储在应用实例的（ ）属性中。", "opts": ["config", "settings", "options", "configs"], "ans": 0, "exp": ""}, {"id": 233, "type": "choice", "chapter": 1, "topic": "配置管理", "q": "若要从名为config.py的文件中加载配置，应使用 Flask 应用实例的（ ）方法。", "opts": ["from_pyfile", "from_python", "from_config_file", "from_object"], "ans": 0, "exp": ""}, {"id": 234, "type": "choice", "chapter": 4, "topic": "表单处理", "q": "Flask 中，设置密钥（SECRET_KEY）的主要作用是（ ）。", "opts": ["加密数据", "标识应用", "防止 CSRF 攻击", "认证用户"], "ans": 2, "exp": ""}, {"id": 235, "type": "choice", "chapter": 1, "topic": "配置管理", "q": "从环境变量中加载配置时，Flask 使用的方法是（ ）。", "opts": ["from_envvar", "load_from_env", "env_load", "from_environment"], "ans": 0, "exp": ""}, {"id": 236, "type": "judge", "chapter": 1, "topic": "Flask基础", "q": "Flask 中，SECRET_KEY可以随便设置一个字符串，不影响应用安全。", "ans": false, "exp": ""}, {"id": 237, "type": "judge", "chapter": 1, "topic": "配置管理", "q": "从环境变量加载配置时，环境变量的值必须是 Python 文件路径。", "ans": false, "exp": ""}, {"id": 238, "type": "judge", "chapter": 1, "topic": "配置管理", "q": "配置项JSON_SORT_KEYS设置为False时，JSON 输出的键会按照字母顺序排序。", "ans": false, "exp": ""}, {"id": 239, "type": "judge", "chapter": 1, "topic": "配置管理", "q": "Flask 的配置项只能在应用创建时设置，之后不能修改。", "ans": false, "exp": ""}, {"id": 280, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "安装 Flask-SQLAlchemy 扩展包使用的命令是（ ）。", "opts": ["pip install flask - sql", "pip install flask - sqlalchemy", "pip install sqlalchemy", "pip install flask - db"], "ans": 1, "exp": ""}, {"id": 281, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "初始化 Flask-SQLAlchemy 实例的代码通常是（ ）。", "opts": ["db = SQLAlchemy(Flask)", "db = SQLAlchemy(app)", "db = Flask(SQLAlchemy)", "db = app(SQLAlchemy)"], "ans": 1, "exp": ""}, {"id": 282, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "在 Flask 项目中使用 Flask-SQLAlchemy，首先需要导入的类是（ ）。", "opts": ["Flask和SQLAlchemy", "FlaskForm和SQLAlchemy", "Flask和DataRequired", "FlaskForm和DataRequired"], "ans": 0, "exp": ""}, {"id": 283, "type": "choice", "chapter": 6, "topic": "SQLAlchemy", "q": "Flask-SQLAlchemy 是 Flask 的一个扩展，主要用于（ ）。", "opts": ["处理表单数据", "实现模板渲染", "与数据库进行交互", "处理用户认证"], "ans": 2, "exp": ""}, {"id": 284, "type": "judge", "chapter": 8, "topic": "数据库连接", "q": "安装 Flask-SQLAlchemy 后，不需要配置数据库连接 URL。", "ans": false, "exp": ""}, {"id": 285, "type": "judge", "chapter": 6, "topic": "SQLAlchemy", "q": "模型类中的字段类型必须与数据库中的字段类型完全一致。", "ans": false, "exp": ""}, {"id": 286, "type": "judge", "chapter": 8, "topic": "SQLite", "q": "Flask-SQLAlchemy 只能连接 SQLite 数据库。", "ans": false, "exp": ""}, {"id": 287, "type": "judge", "chapter": 6, "topic": "CRUD操作", "q": "插入数据时，不需要使用db.session.commit()提交事务也能成功插入。", "ans": false, "exp": ""}, {"id": 374, "type": "short", "chapter": 1, "topic": "Flask基础", "q": "简述Flask的概念", "ans": "Flask 是一个轻量级的 Python Web 微框架，基于 Werkzeug WSGI 工具包和 Jinja2 模板引擎。它采用 \"微核心\" 设计理念，核心只提供 Web 开发的基本功能，其他功能通过扩展实现，具有灵活、易扩展、学习曲线平缓的特点。"}, {"id": 375, "type": "short", "chapter": 2, "topic": "路由与请求", "q": "简述URL的传递参数的方式，描述一下语法格式", "ans": "调用route()和add_url_rule()方法注册路由时，在URL规则字符串中加入尖括号标实变量，标记为URL中动态变化部分的内容，将该变量作为参数传递给视图函数。\nURL参数的语法格式：<variable_name>"}, {"id": 376, "type": "short", "chapter": 3, "topic": "模板继承", "q": "描述关于模板继承中关于块的语法格式", "ans": "继承语法格式：{% extends 基模板名称}\n在基模板中，通过block和endblock定义块的语法格式：\n{% block 块名称 %}\n基模板代码\n{% endblock 块名称 %}\n在子模板中：\n{% extends 基模板名称 %}\n{% block 块名称 %}\n子模板代码\n{% endblock 块名称 %}"}, {"id": 377, "type": "code_fill", "chapter": 8, "topic": "数据库连接", "q": "补全Pyecharts与Flask结合中折线图的数据准备代码：", "code": "class SourceDataDemo:\n    @____\n    def line(self):\n        data = ____()\n        pre_data = pd.read_excel(\"../data/二手房预测结果.xlsx\")\n        data.title = '二手房预测结果折线图示例'\n        data.values = [\n            {'name': '真实值', 'values': pre_data.iloc[:30,0].____()},\n            {'name': '预测值', 'values': pre_data.iloc[:30,1].____()},\n        ]\n        data.legend = [key['name'] for key in data.values]\n        data.xAxis = [x for x in range(pre_data.iloc[:30,0].shape[0])]\n        data.unit = '单位：元'\n        ____ data", "blanks": ["装饰器", "数据类", "转列表方法", "转列表方法", "返回"], "opts": [["@property", "@staticmethod", "@classmethod", "@decorator"], ["Data", "Chart", "Source", "DataFrame"], ["tolist()", "to_list()", "values()", "list()"], ["tolist()", "to_list()", "values()", "list()"], ["return", "yield", "print", "output"]], "ans": [0, 0, 0, 0, 0], "exp": "@property使方法可以像属性一样被调用；Data()是数据封装类；tolist()将pandas Series转为Python列表；return返回数据对象。"}, {"id": 378, "type": "code_fill", "chapter": 8, "topic": "数据库连接", "q": "补全柱形图数据准备代码（各区域单价对比）：", "code": "    @property\n    def bar(self):\n        data = Data()\n        region_price = pd.read_excel(\"../data/区域单价.xlsx\")\n        data.title = '二手房各区域的单价对比图'\n        data.values = [\n            {'name': '区域', 'values': region_price.iloc[:,____]____()},\n        ]\n        data.legend = [key['name'] for key in data.____]\n        data.xAxis = region_price.iloc[:,____]____()\n        data.unit = '单位：元'\n        return data", "blanks": ["数据列索引", "转列表", "数据属性", "X轴列索引", "转列表"], "opts": [["1", "0", "2", "-1"], [".tolist()", ".values()", ".to_list()", ".items()"], ["values", "data", "legend", "xAxis"], ["0", "1", "2", "-1"], [".tolist()", ".values()", ".to_list()", ".items()"]], "ans": [0, 0, 0, 0, 0], "exp": "iloc[:,1]取第二列数据（单价），tolist()转为列表；iloc[:,0]取第一列（区域名）作为X轴；legend从data.values中提取name字段。"}, {"id": 379, "type": "code_fill", "chapter": 8, "topic": "数据库连接", "q": "补全饼图数据准备代码（各区域二手房数量占比）：", "code": "    @property\n    def pie(self):\n        data = Data()\n        housenum = pd.read_excel(\"../data/各区域二手房数量的占比分析.xlsx\")\n        data.title = '各区域二手房数量占比图'\n        data.values = [{'name': x, 'value': y} for x, y in ____(housenum[0], housenum[1])]\n        data.legend = [key['____'] for key in data.values]\n        data.unit = '访问数'\n        return data", "blanks": ["配对函数", "字典键名"], "opts": [["zip", "map", "enumerate", "range"], ["name", "value", "title", "label"]], "ans": [0, 0], "exp": "zip()将两列数据配对，生成(name, value)字典列表；legend提取每个字典的name字段。"}, {"id": 380, "type": "code_fill", "chapter": 2, "topic": "路由与请求", "q": "补全Flask登录功能的核心代码：", "code": "@app.route('/login', methods=['GET', '____'])\ndef login():\n    if \"user_id\" in ____:\n        return redirect(url_for(\"index\"))\n    if request.method == \"POST\":\n        username = request.____.get(\"username\", \"\").strip()\n        password = request.form.get(\"password\", \"\")\n        user = User.query.____(username=username).first()\n        if user and user.check_password(password):\n            if user.is_active:\n                session[\"user_id\"] = user.____\n                session[\"username\"] = user.username\n                flash(\"登录成功\", \"info\")\n                return ____(url_for(\"index\"))\n        else:\n            flash(\"用户名或密码错误\", \"error\")\n    return render_template(\"login_new.html\")", "blanks": ["请求方法", "会话对象", "表单数据", "查询方法", "用户ID", "跳转函数"], "opts": [["POST", "PUT", "DELETE", "PATCH"], ["session", "request", "cookie", "g"], ["form", "data", "args", "json"], ["filter_by", "filter", "get", "find"], ["id", "name", "uid", "pk"], ["redirect", "forward", "jump", "goto"]], "ans": [0, 0, 0, 0, 0, 0], "exp": "POST方法处理表单提交；session存储用户会话信息；request.form获取表单数据；filter_by按条件查询用户；user.id存储用户唯一标识；redirect实现页面重定向。"}, {"id": 381, "type": "code_fill", "chapter": 2, "topic": "路由与请求", "q": "补全Flask注册功能的关键代码：", "code": "@app.route('/register', methods=['GET', 'POST'])\ndef register():\n    if request.method == \"POST\":\n        username = request.form.get(\"username\", \"\")\n        password = request.form.get(\"password\", \"\")\n        confirm_password = request.form.get(\"confirm_password\", \"\")\n        # 检查用户名是否已存在\n        if User.query.filter_by(username=username).____():\n            flash(\"用户名已存在\", \"error\")\n            return render_template(\"register.html\")\n        # 创建新用户\n        try:\n            user = User(username=username, email=email)\n            user.____(password)\n            db.session.____(user)\n            db.session.____()\n            flash(f\"注册成功 欢迎{username}\")\n            return redirect(url_for(\"login\"))\n        except Exception as e:\n            db.session.____()\n            flash(f\"注册失败：{str(e)}\", \"error\")\n    return render_template(\"register.html\")", "blanks": ["查询方法", "设置密码", "添加记录", "提交事务", "回滚事务"], "opts": [["first", "all", "one", "get"], ["set_password", "hash_password", "encrypt", "make_password"], ["add", "insert", "save", "create"], ["commit", "save", "flush", "push"], ["rollback", "revert", "undo", "cancel"]], "ans": [0, 0, 0, 0, 0], "exp": "first()获取第一条匹配记录判断用户名是否存在；set_password()对密码进行哈希加密；db.session.add()添加新记录；commit()提交事务；rollback()在异常时回滚。"}, {"id": 382, "type": "code_fill", "chapter": 1, "topic": "Flask基础", "q": "补全Flask应用的基本创建代码：", "code": "from flask import Flask\n\napp = Flask(____)\napp.config['____'] = True\n\n@app.____('/hello')\ndef hello():\n    return 'Hello, Flask!'\n\nif __name__ == '__main__':\n    app.____(host='0.0.0.0', port=5000, debug=True)", "blanks": ["应用参数", "调试配置", "路由装饰器", "启动方法"], "opts": [["__name__", "__main__", "self", "app"], ["DEBUG", "TESTING", "DEVELOP", "MODE"], ["route", "url", "path", "view"], ["run", "start", "serve", "listen"]], "ans": [0, 0, 0, 0], "exp": "__name__确定应用根路径；DEBUG=True启用调试模式；@app.route()注册路由；app.run()启动开发服务器。"}, {"id": 383, "type": "code_fill", "chapter": 6, "topic": "SQLAlchemy", "q": "补全Flask-SQLAlchemy模型类定义代码：", "code": "class User(db.____):\n    id = db.Column(db.Integer, ____=True)\n    username = db.Column(db.String(80), ____=True)\n    email = db.Column(db.String(120))\n    password_hash = db.Column(db.String(128))\n    \n    def set_password(self, password):\n        self.password_hash = generate_password_hash(password)\n    \n    def check_password(self, password):\n        return ____(self.password_hash, password)", "blanks": ["基类", "主键参数", "唯一参数", "验证函数"], "opts": [["Model", "Base", "Table", "Entity"], ["primary_key", "key", "main", "pk"], ["unique", "only", "single", "distinct"], ["check_password_hash", "verify_password", "compare_hash", "validate"]], "ans": [0, 0, 0, 0], "exp": "db.Model是SQLAlchemy模型基类；primary_key=True设置主键；unique=True确保唯一性；check_password_hash验证密码哈希。"}, {"id": 384, "type": "short", "chapter": 1, "topic": "Flask基础", "q": "简述Flask的概念。", "ans": "Flask 是一个轻量级的 Python Web 微框架，基于 Werkzeug WSGI 工具包和 Jinja2 模板引擎。它采用\"微核心\"设计理念，核心只提供 Web 开发的基本功能，其他功能通过扩展实现，具有灵活、易扩展、学习曲线平缓的特点。"}, {"id": 385, "type": "short", "chapter": 2, "topic": "路由与请求", "q": "简述URL的传递参数的方式，描述一下语法格式。", "ans": "调用route()和add_url_rule()方法注册路由时，在URL规则字符串中加入尖括号标记变量，标记为URL中动态变化部分的内容，将该变量作为参数传递给视图函数。\nURL参数的语法格式：<variable_name>"}, {"id": 386, "type": "short", "chapter": 2, "topic": "路由与请求", "q": "简述Flask中请求上下文和应用上下文包含的对象及用途。", "ans": "请求上下文 (Request Context)：\n- request：封装了 HTTP 请求的所有信息，如请求方法、URL、表单数据、请求头等\n- session：用于存储用户会话信息，在不同请求间保持用户状态\n\n应用上下文 (Application Context)：\n- current_app：指向当前处理请求的应用实例\n- g：全局临时对象，用于在一次请求中存储和共享数据，请求结束后清空"}, {"id": 387, "type": "short", "chapter": 2, "topic": "路由与请求", "q": "简述响应报文的组成。", "ans": "1. 状态行：包含 HTTP 版本、状态码和状态描述\n2. 响应头：包含服务器信息、内容类型、内容长度、Cookie 等元数据\n3. 空行：分隔响应头和响应体\n4. 响应体：服务器返回的实际内容，如 HTML、JSON、图片等"}, {"id": 388, "type": "short", "chapter": 3, "topic": "过滤器", "q": "简述如何自定义过滤器。", "ans": "自定义过滤器需要注册到Flask的过滤器列表中才可以在模板文件中使用，使用装饰器@app.template_filter()可以将自定义过滤器注册到过滤器列表中，template_filter()方法中包含一个可选参数name，该参数表示该过滤器的名称，默认值为被装饰的函数名。"}, {"id": 389, "type": "short", "chapter": 3, "topic": "宏", "q": "简述宏的概念以及定义与调用方法。", "ans": "概念：宏是 Jinja2 模板中的可重用代码块，类似于 Python 中的函数，用于封装重复的 HTML 片段。\n\n定义宏的语法格式：\n{% macro 宏的名称(参数列表) %}\n    宏内部逻辑代码\n{% endmacro %}\n\n调用的语法格式：\n宏的名称(参数列表)"}, {"id": 390, "type": "short", "chapter": 3, "topic": "模板继承", "q": "描述关于模板继承中关于块的语法格式。", "ans": "继承语法格式：{% extends 基模板名称 %}\n\n在基模板中，通过block和endblock定义块：\n{% block 块名称 %}\n基模板代码\n{% endblock 块名称 %}\n\n在子模板中：\n{% extends 基模板名称 %}\n{% block 块名称 %}\n子模板代码\n{% endblock 块名称 %}"}, {"id": 391, "type": "short", "chapter": 4, "topic": "表单处理", "q": "简述如何使用Flask-WTF创建表单。", "ans": "使用 Flask-WTF 创建表单分为四个步骤：\n1. 首先安装 Flask-WTF 扩展包\n2. 定义表单类，该类需要继承自 FlaskForm 基类，在类中根据需要定义不同类型的表单字段，并为每个字段添加相应的验证规则\n3. 在视图函数中实例化这个表单类，判断表单是否被提交且通过验证，如果验证通过则处理表单数据\n4. 在 HTML 模板中渲染表单，需要先渲染表单的隐藏标签（用于防止CSRF攻击），然后依次渲染每个字段的标签和输入框，最后渲染提交按钮"}, {"id": 392, "type": "short", "chapter": 5, "topic": "类视图", "q": "简述如何定义类的视图。", "ans": "Flask 支持两种类视图的定义方式：\n\n普通类视图：创建一个类，继承自 View 基类，在类中实现 dispatch_request 方法，该方法会处理所有的请求并返回响应。最后使用应用实例的 add_url_rule 方法注册这个类视图，注册时需要使用 as_view 方法将类转换为视图函数。\n\n方法类视图：创建一个类，继承自 MethodView 基类，在类中根据需要定义与 HTTP 方法同名的方法（如 get、post、put、delete 等），每个方法处理对应的 HTTP 请求。注册方式与普通类视图相同。"}, {"id": 393, "type": "short", "chapter": 6, "topic": "SQLAlchemy", "q": "简述如何使用Flask-SQLAlchemy连接数据库。", "ans": "使用 Flask-SQLAlchemy 连接数据库分为三个步骤：\n1. 首先安装 Flask-SQLAlchemy 扩展包\n2. 配置应用的数据库连接参数，主要是设置 SQLALCHEMY_DATABASE_URI 配置项，不同类型的数据库有不同的 URI 格式。同时建议关闭 SQLALCHEMY_TRACK_MODIFICATIONS 配置项以避免不必要的警告。\n3. 导入 SQLAlchemy 类，创建一个 SQLAlchemy 实例，并将 Flask 应用实例传入该实例进行初始化。"}, {"id": 394, "type": "short", "chapter": 6, "topic": "关系映射", "q": "简述关系数据库和非关系数据库的特点。", "ans": "关系数据库：\n1. 采用表结构存储数据，数据之间通过关系关联\n2. 支持 SQL 查询语言，功能强大\n3. 严格遵循 ACID 事务特性\n4. 数据一致性高\n\n非关系数据库：\n1. 数据模型灵活，支持键值、文档、图形、列族等多种存储方式\n2. 不支持 SQL 或仅支持有限的 SQL 功能\n3. 水平扩展能力强\n4. 读写性能高"}, {"id": 395, "type": "short", "chapter": 6, "topic": "SQLAlchemy", "q": "数据库操作里面如何实现增删改查。", "ans": "增加数据：db.session提供了add()和add_all()方法，add()增加一条记录，add_all()增加多条数据。\n\n删除数据：使用数据库会话提供的delete()方法，删除完成后需要调用commit()方法将数据提交至数据库。\n\n更新数据：为模型类的字段重新赋值，对字段原先的值进行修改，修改完成后需要调用commit()方法将数据提交至数据库。\n\n查询数据：调用model类中提供的query属性，model类的对象通过访问query属性可以获取一个查询对象，该对象中提供了一些过滤方法和查询方法可用于对查询结果进行过滤和筛选。"}];
+const chapterNames = {"1": "Flask基础", "2": "路由与请求", "3": "模板引擎", "4": "表单处理", "5": "类视图", "6": "数据库操作", "7": "PyQt5", "8": "数据库连接", "9": "数据可视化"};
+let state={currentPage:'overview',quizIndex:0,quizOrder:[],answered:{},wrongBook:JSON.parse(localStorage.getItem('fv_wrong')||'[]'),quizStats:JSON.parse(localStorage.getItem('fv_stats')||'{"total":0,"correct":0}'),autoNext:false,cardView:'flip',currentBlank:null,fillAnswers:{},quizFilter:'all'};
+function shuffle(a){let b=[...a];for(let i=b.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+function saveState(){localStorage.setItem('fv_wrong',JSON.stringify(state.wrongBook));localStorage.setItem('fv_stats',JSON.stringify(state.quizStats))}
+function getTypeName(t){return{choice:'选择题',judge:'判断题',short:'简答题',code_fill:'代码填空题'}[t]||t}
+function getTypeColor(t){return{choice:'#667eea',judge:'#ff9800',short:'#4caf50',code_fill:'#f44336'}[t]||'#667eea'}
+function getStats(){let s={choice:0,judge:0,short:0,code_fill:0};questions.forEach(q=>{if(s[q.type]!==undefined)s[q.type]++});return s}
+function switchPage(id,btn){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById(id).classList.add('active');if(btn)btn.classList.add('active');state.currentPage=id;if(id==='overview')renderOverview();if(id==='cards')renderCards();if(id==='code-kp')renderCodeKP();if(id==='quiz')renderQuiz();if(id==='wrong')renderWrong();if(id==='progress')renderProgress()}
+function renderOverview(){let s=getStats(),total=questions.length,chCounts={};questions.forEach(q=>{chCounts[q.chapter]=(chCounts[q.chapter]||0)+1});let chCards='';for(let c in chapterNames){let cnt=chCounts[c]||0;if(cnt>0)chCards+='<div class="gen-card"><div class="num">'+cnt+'</div><div class="label">'+chapterNames[c]+'</div></div>'}let html='<div style="background:#fff3cd;border:2px solid #ffc107;border-radius:10px;padding:15px 20px;margin-bottom:20px;font-size:.95em;line-height:1.6"><b style="color:#856404">⚠️ 注意提示</b><p style="color:#856404;margin-top:8px">本题库包含课程测验原题和根据复习资料整理的知识点题目，供复习练习使用。请以课堂教学内容为准。</p></div><h2 class="section-title">📝 题库分布（共'+total+'道）</h2><div class="exam-grid"><div class="exam-card"><div class="num">'+s.choice+'</div><div class="label">选择题</div></div><div class="exam-card"><div class="num">'+s.judge+'</div><div class="label">判断题</div></div><div class="exam-card"><div class="num">'+s.short+'</div><div class="label">简答题</div></div><div class="exam-card"><div class="num">'+s.code_fill+'</div><div class="label">代码填空题</div></div></div><h2 class="section-title">📖 知识模块分布</h2><div class="gen-grid">'+chCards+'</div><h2 class="section-title">📚 考试范围</h2><div style="padding:15px;background:#f8f9fa;border-radius:12px;line-height:1.8"><p><b>主要模块：</b></p><ul style="margin-left:20px;margin-top:8px"><li>Flask Web框架（基础、路由、模板、表单、类视图）</li><li>Flask-SQLAlchemy 数据库操作（ORM、CRUD）</li><li>PyQt5 桌面应用开发（控件、布局、信号槽、对话框）</li><li>数据库连接（SQLite、MySQL）</li><li>数据可视化（Pyecharts 图表绑定 Flask）</li></ul></div><h2 class="section-title">🎯 复习建议</h2><div style="padding:15px;background:#e8f5e9;border-radius:12px;line-height:1.8"><ul style="margin-left:20px"><li><b>选择题+判断题：</b>记忆基础概念，使用知识卡片快速过</li><li><b>简答题：</b>重点理解Flask核心概念，用自己的话复述</li><li><b>代码填空题：</b>熟练掌握Flask路由、Pyecharts图表、登录注册的代码写法</li><li><b>建议顺序：</b>先看"代码知识点"页 → 再用"随机刷题"巩固 → 错题本查漏补缺</li></ul></div>';document.getElementById('overview').innerHTML=html}
+function renderCards(){let html='<div class="view-toggle"><button class="toggle-btn '+(state.cardView==='knowledge'?'active':'')+'" onclick="state.cardView=\'knowledge\';renderCards()">📚 知识点列表</button><button class="toggle-btn '+(state.cardView==='flip'?'active':'')+'" onclick="state.cardView=\'flip\';renderCards()">🃏 题目卡片</button></div><div class="filter-bar"><button class="filter-btn active" onclick="filterCards(\'all\',this)">全部</button>';for(let c in chapterNames){html+='<button class="filter-btn" onclick="filterCards(\''+c+'\',this)">'+chapterNames[c]+'</button>'}html+='</div>';if(state.cardView==='knowledge'){let topics={};questions.forEach(q=>{let key=q.chapter+'_'+q.topic;if(!topics[key])topics[key]={chapter:q.chapter,topic:q.topic,qs:[]};topics[key].qs.push(q)});html+='<div class="list-view" id="cardGrid2">';for(let t in topics){let tp=topics[t];let shortQs=tp.qs.filter(q=>q.type==='short');html+='<div class="section" data-chapter="'+tp.chapter+'"><h4>'+(chapterNames[tp.chapter]||'')+' · '+tp.topic+'（'+tp.qs.length+'题）</h4>';if(shortQs.length){html+='<p style="white-space:pre-wrap">'+escHtml(shortQs[0].ans)+'</p>'}else{html+='<ul>';tp.qs.forEach(q=>{if(q.type==='choice')html+='<li>'+escHtml(q.q)+' → <b>'+escHtml(q.opts[q.ans])+'</b></li>';else if(q.type==='judge')html+='<li>'+escHtml(q.q)+' → <b>'+(q.ans?'✓ 正确':'✗ 错误')+'</b></li>';else if(q.type==='code_fill')html+='<li>'+escHtml(q.q)+'</li>'});html+='</ul>'}html+='</div>'}html+='</div>'}else{let cardQs=questions.filter(q=>q.type==='choice'||q.type==='judge');html+='<div class="flip-grid" id="cardGrid2">';cardQs.forEach(q=>{let tag=(chapterNames[q.chapter]||'')+' · '+q.topic;let ft='',bt='';if(q.type==='choice'){let L=['A','B','C','D'];ft='<div style="font-size:.95em;margin-bottom:10px">'+escHtml(q.q)+'</div>';q.opts.forEach((o,i)=>{ft+='<div style="margin:6px 0;font-size:.85em;padding:4px 8px;background:rgba(255,255,255,.15);border-radius:6px">'+L[i]+'. '+escHtml(o)+'</div>'});bt='<b>正确答案：'+L[q.ans]+'</b><br>'+escHtml(q.opts[q.ans]);if(q.exp)bt+='<br><br><span style="font-size:.85em;color:#666">'+escHtml(q.exp)+'</span>'}else{ft='<div style="font-size:.95em">'+escHtml(q.q)+'</div>';bt='<b>正确答案：'+(q.ans?'✓ 正确':'✗ 错误')+'</b>';if(q.exp)bt+='<br><br><span style="font-size:.85em;color:#666">'+escHtml(q.exp)+'</span>'}html+='<div class="flip-card" data-chapter="'+q.chapter+'" onclick="this.classList.toggle(\'flipped\')"><div class="flip-card-inner"><div class="flip-front"><span class="card-tag">'+tag+'</span><div style="flex:1;overflow-y:auto">'+ft+'</div><span class="hint">点击翻转查看答案 →</span></div><div class="flip-back"><span class="card-tag">'+tag+'</span><h4>💡 答案</h4><div style="font-size:.9em;line-height:1.8">'+bt+'</div></div></div></div>'});html+='</div>'}document.getElementById('cards').innerHTML=html}
+function escHtml(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function filterCards(ch,btn){document.querySelectorAll('#cards .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('#cardGrid2 > *').forEach(el=>{if(ch==='all'||parseInt(el.dataset.chapter)===parseInt(ch))el.style.display='';else el.style.display='none'})}
+function renderCodeKP(){document.getElementById('code-kp').innerHTML=codeKPContent}
+const codeKPContent='<div class="code-section"><h3>📌 1. Flask 基础应用</h3><div class="code-sub"><h4>1.1 应用创建与配置</h4><div class="code-block"><span class="cc"># 导入Flask</span>\n<span class="ck">from</span> flask <span class="ck">import</span> Flask\n\n<span class="cc"># 创建应用实例</span>\napp = <span class="cf">Flask</span>(<span class="cs">__name__</span>)\n\n<span class="cc"># 配置项设置</span>\napp.config[<span class="cs">\'SECRET_KEY\'</span>] = <span class="cs">\'your-secret-key\'</span>\napp.config[<span class="cs">\'DEBUG\'</span>] = <span class="ck">True</span>\n\n<span class="cc"># 注册路由</span>\n<span class="cf">@app.route</span>(<span class="cs">\'/hello\'</span>)\n<span class="ck">def</span> <span class="cf">hello</span>():\n    <span class="ck">return</span> <span class="cs">\'Hello, Flask!\'</span>\n\n<span class="cc"># 启动服务器</span>\n<span class="ck">if</span> __name__ == <span class="cs">\'__main__\'</span>:\n    app.<span class="cf">run</span>(host=<span class="cs">\'0.0.0.0\'</span>, port=<span class="ck">5000</span>, debug=<span class="ck">True</span>)</div><div class="key-point"><b>💡 考点</b><ul style="margin-left:18px;margin-top:8px"><li>Flask(__name__) 创建应用实例</li><li>默认端口5000，调试模式默认关闭</li><li>依赖：Werkzeug（WSGI工具包）+ Jinja2（模板引擎）</li><li>SECRET_KEY 用于session加密和CSRF防护</li></ul></div></div><div class="code-sub"><h4>1.2 路由与请求</h4><div class="code-block"><span class="cf">@app.route</span>(<span class="cs">\'/user/&lt;name&gt;\'</span>, methods=[<span class="cs">\'GET\'</span>, <span class="cs">\'POST\'</span>])\n<span class="ck">def</span> <span class="cf">user</span>(name):\n    <span class="ck">return</span> f<span class="cs">\'Hello, {name}!\'</span>\n\n<span class="cc"># URL参数转换器</span>\n<span class="cf">@app.route</span>(<span class="cs">\'/post/&lt;int:post_id&gt;\'</span>)\n<span class="ck">def</span> <span class="cf">show_post</span>(post_id):\n    <span class="ck">return</span> f<span class="cs">\'Post {post_id}\'</span>\n\n<span class="cc"># URL反转与重定向</span>\nurl = <span class="cf">url_for</span>(<span class="cs">\'user\'</span>, name=<span class="cs">\'admin\'</span>)\n<span class="ck">return</span> <span class="cf">redirect</span>(<span class="cf">url_for</span>(<span class="cs">\'index\'</span>))</div><div class="key-point"><b>💡 考点</b><ul style="margin-left:18px;margin-top:8px"><li>动态参数用尖括号 &lt;param&gt; 标记</li><li>内置转换器：int、float、string、path</li><li>默认请求方法为GET</li><li>url_for() 根据端点名称反向解析URL</li><li>redirect() 默认状态码302</li></ul></div></div></div><div class="code-section"><h3>📌 2. Jinja2 模板引擎</h3><div class="code-sub"><h4>2.1 模板语法速查</h4><table class="anno-table"><tr><th>语法</th><th>用途</th><th>示例</th></tr><tr><td><code>{{ }}</code></td><td>输出变量</td><td><code>{{ user.name }}</code></td></tr><tr><td><code>{% %}</code></td><td>逻辑代码</td><td><code>{% if x %}...{% endif %}</code></td></tr><tr><td><code>|</code></td><td>过滤器</td><td><code>{{ name | upper }}</code></td></tr><tr><td><code>{# #}</code></td><td>注释</td><td><code>{# 这是注释 #}</code></td></tr></table><div class="key-point"><b>💡 常用过滤器</b><ul style="margin-left:18px;margin-top:8px"><li><code>upper</code> / <code>lower</code> — 大小写转换</li><li><code>length</code> — 获取列表长度</li><li><code>capitalize</code> / <code>title</code> — 首字母大写</li><li><code>safe</code> — 关闭自动转义</li></ul></div></div><div class="code-sub"><h4>2.2 模板继承</h4><div class="code-block"><span class="cc">&lt;!-- base.html 基模板 --&gt;</span>\n<span class="cs">{% block content %}</span>\n默认内容\n<span class="cs">{% endblock %}</span>\n\n<span class="cc">&lt;!-- child.html 子模板 --&gt;</span>\n<span class="cs">{% extends \'base.html\' %}</span>\n<span class="cs">{% block content %}</span>\n子模板内容\n<span class="cs">{% endblock %}</span></div></div><div class="code-sub"><h4>2.3 宏的定义与调用</h4><div class="code-block"><span class="cc">{# 定义宏 #}</span>\n<span class="cs">{% macro input(name, type=\'text\') %}</span>\n&lt;input type="{{ type }}" name="{{ name }}"&gt;\n<span class="cs">{% endmacro %}</span>\n\n<span class="cc">{# 调用宏 #}</span>\n{{ input(\'username\') }}\n\n<span class="cc">{# 从其他文件导入宏 #}</span>\n<span class="cs">{% from \'macro.html\' import input %}</span></div></div></div><div class="code-section"><h3>📌 3. Flask-SQLAlchemy 数据库</h3><div class="code-sub"><h4>3.1 模型定义</h4><div class="code-block"><span class="ck">class</span> <span class="cf">User</span>(db.Model):\n    id = db.Column(db.Integer, primary_key=<span class="ck">True</span>)\n    username = db.Column(db.String(<span class="ck">80</span>), unique=<span class="ck">True</span>)\n    email = db.Column(db.String(<span class="ck">120</span>))\n    password_hash = db.Column(db.String(<span class="ck">128</span>))</div></div><div class="code-sub"><h4>3.2 CRUD 操作</h4><div class="code-block"><span class="cc"># 增加</span>\nuser = User(username=<span class="cs">\'admin\'</span>)\ndb.session.<span class="cf">add</span>(user)      <span class="cc"># 单条</span>\ndb.session.<span class="cf">add_all</span>([u1,u2]) <span class="cc"># 多条</span>\ndb.session.<span class="cf">commit</span>()\n\n<span class="cc"># 查询</span>\nusers = User.query.<span class="cf">all</span>()\nuser = User.query.<span class="cf">filter_by</span>(username=<span class="cs">\'admin\'</span>).<span class="cf">first</span>()\n\n<span class="cc"># 更新</span>\nuser.email = <span class="cs">\'new@email.com\'</span>\ndb.session.<span class="cf">commit</span>()\n\n<span class="cc"># 删除</span>\ndb.session.<span class="cf">delete</span>(user)\ndb.session.<span class="cf">commit</span>()</div><div class="key-point"><b>💡 考点</b><ul style="margin-left:18px;margin-top:8px"><li>模型类继承 <code>db.Model</code></li><li><code>db.Column</code> 定义字段，<code>primary_key</code> 指定主键</li><li><code>commit()</code> 提交事务，<code>rollback()</code> 回滚</li><li>一对多关系：外键定义在"多"侧</li><li>多对多关系：用 <code>db.Table</code> 创建关联表</li></ul></div></div></div><div class="code-section"><h3>📌 4. Pyecharts + Flask 可视化</h3><div class="code-sub"><h4>4.1 折线图数据准备</h4><div class="code-block"><span class="ck">class</span> <span class="cf">SourceDataDemo</span>:\n    <span class="cf">@property</span>\n    <span class="ck">def</span> <span class="cf">line</span>(self):\n        data = <span class="cs">Data</span>()\n        pre_data = pd.<span class="cf">read_excel</span>(<span class="cs">"../data/数据.xlsx"</span>)\n        data.title = <span class="cs">\'折线图示例\'</span>\n        data.values = [\n            {<span class="cs">\'name\'</span>: <span class="cs">\'真实值\'</span>, <span class="cs">\'values\'</span>: pre_data.iloc[:<span class="ck">30</span>,<span class="ck">0</span>].<span class="cf">tolist</span>()},\n            {<span class="cs">\'name\'</span>: <span class="cs">\'预测值\'</span>, <span class="cs">\'values\'</span>: pre_data.iloc[:<span class="ck">30</span>,<span class="ck">1</span>].<span class="cf">tolist</span>()},\n        ]\n        data.legend = [key[<span class="cs">\'name\'</span>] <span class="ck">for</span> key <span class="ck">in</span> data.values]\n        data.xAxis = [x <span class="ck">for</span> x <span class="ck">in</span> <span class="cf">range</span>(<span class="ck">30</span>)]\n        <span class="ck">return</span> data</div><div class="key-point"><b>💡 考点</b><ul style="margin-left:18px;margin-top:8px"><li><code>@property</code> 使方法可以像属性一样调用</li><li><code>data.values</code> 格式：[{\'name\':\'xx\',\'values\':[...]}]</li><li>饼图 values 格式：[{\'name\':\'xx\',\'value\':数字}]</li><li><code>zip()</code> 将两列数据配对</li><li><code>tolist()</code> 将 pandas Series 转为 Python 列表</li></ul></div></div><div class="code-sub"><h4>4.2 饼图数据准备</h4><div class="code-block">    <span class="cf">@property</span>\n    <span class="ck">def</span> <span class="cf">pie</span>(self):\n        data = <span class="cs">Data</span>()\n        housenum = pd.<span class="cf">read_excel</span>(<span class="cs">"../data/数据.xlsx"</span>)\n        data.title = <span class="cs">\'占比图\'</span>\n        data.values = [{<span class="cs">\'name\'</span>: x, <span class="cs">\'value\'</span>: y}\n            <span class="ck">for</span> x, y <span class="ck">in</span> <span class="cf">zip</span>(housenum[<span class="ck">0</span>], housenum[<span class="ck">1</span>])]\n        data.legend = [key[<span class="cs">\'name\'</span>] <span class="ck">for</span> key <span class="ck">in</span> data.values]\n        <span class="ck">return</span> data</div></div></div><div class="code-section"><h3>📌 5. 登录注册业务逻辑</h3><div class="code-sub"><h4>5.1 登录核心流程</h4><div class="code-block"><span class="cf">@app.route</span>(<span class="cs">\'/login\'</span>, methods=[<span class="cs">\'GET\'</span>, <span class="cs">\'POST\'</span>])\n<span class="ck">def</span> <span class="cf">login</span>():\n    <span class="ck">if</span> <span class="cs">"user_id"</span> <span class="ck">in</span> session:\n        <span class="ck">return</span> <span class="cf">redirect</span>(<span class="cf">url_for</span>(<span class="cs">"index"</span>))\n    <span class="ck">if</span> request.method == <span class="cs">"POST"</span>:\n        username = request.form.<span class="cf">get</span>(<span class="cs">"username"</span>, <span class="cs">""</span>).strip()\n        password = request.form.<span class="cf">get</span>(<span class="cs">"password"</span>, <span class="cs">""</span>)\n        user = User.query.<span class="cf">filter_by</span>(username=username).<span class="cf">first</span>()\n        <span class="ck">if</span> user <span class="ck">and</span> user.<span class="cf">check_password</span>(password):\n            session[<span class="cs">"user_id"</span>] = user.id\n            <span class="cf">flash</span>(<span class="cs">"登录成功"</span>, <span class="cs">"info"</span>)\n            <span class="ck">return</span> <span class="cf">redirect</span>(<span class="cf">url_for</span>(<span class="cs">"index"</span>))\n        <span class="ck">else</span>:\n            <span class="cf">flash</span>(<span class="cs">"用户名或密码错误"</span>, <span class="cs">"error"</span>)\n    <span class="ck">return</span> <span class="cf">render_template</span>(<span class="cs">"login.html"</span>)</div><div class="key-point"><b>💡 考点</b><ul style="margin-left:18px;margin-top:8px"><li><code>session</code> 存储用户信息保持登录状态</li><li><code>request.form.get()</code> 获取表单数据</li><li><code>flash()</code> 消息闪现，模板用 <code>get_flashed_messages()</code></li><li><code>db.session.rollback()</code> 异常时回滚事务</li></ul></div></div></div>';
+function renderQuiz(){if(!state.quizOrder.length){state.quizOrder=shuffle(questions.map((_,i)=>i));state.quizIndex=0}if(state.quizIndex>=state.quizOrder.length)state.quizIndex=0;if(!state.quizOrder.length){document.getElementById('quiz').innerHTML='<div class="empty-state"><div class="icon">📭</div><p>当前筛选题型无题目</p></div>';return}let idx=state.quizOrder[state.quizIndex],q=questions[idx],answered=state.answered[q.id];let html='<div class="filter-bar"><button class="filter-btn '+(state.quizFilter==='all'?'active':'')+'" onclick="filterQuiz(\'all\',this)">全部</button><button class="filter-btn '+(state.quizFilter==='choice'?'active':'')+'" onclick="filterQuiz(\'choice\',this)">选择题</button><button class="filter-btn '+(state.quizFilter==='judge'?'active':'')+'" onclick="filterQuiz(\'judge\',this)">判断题</button><button class="filter-btn '+(state.quizFilter==='short'?'active':'')+'" onclick="filterQuiz(\'short\',this)">简答题</button><button class="filter-btn '+(state.quizFilter==='code_fill'?'active':'')+'" onclick="filterQuiz(\'code_fill\',this)">代码填空</button></div><div class="quiz-header"><span class="q-type" style="background:'+getTypeColor(q.type)+'">'+getTypeName(q.type)+'</span><span class="q-num">第 '+(state.quizIndex+1)+' / '+state.quizOrder.length+' 题</span><span class="knowledge-tag">'+(chapterNames[q.chapter]||'')+' · '+q.topic+'</span></div><div class="q-text">'+escHtml(q.q).replace(/\n/g,'<br>')+'</div>';if(q.type==='choice'){let L=['A','B','C','D'];html+='<div class="options">';q.opts.forEach((o,i)=>{let c='option';if(answered!==undefined){if(i===q.ans)c+=' correct';else if(i===answered&&i!==q.ans)c+=' wrong'}html+='<div class="'+c+'" onclick="answerQuiz('+q.id+','+i+')"><span class="option-letter">'+L[i]+'</span><span>'+escHtml(o)+'</span></div>'});html+='</div>'}else if(q.type==='judge'){html+='<div class="judge-options"><div class="judge-btn '+(answered===true?'correct':(answered===false&&q.ans===true?'wrong':''))+'" onclick="answerQuiz('+q.id+',true)">✓ 正确</div><div class="judge-btn '+(answered===false?'correct':(answered===true&&q.ans===false?'wrong':''))+'" onclick="answerQuiz('+q.id+',false)">✗ 错误</div></div>'}else if(q.type==='short'){html+='<div class="short-input-area"><textarea placeholder="在这里写下你的答案..." id="shortInput_'+q.id+'">'+(answered||'')+'</textarea><div style="margin-top:10px;display:flex;gap:10px"><button class="btn btn-primary" onclick="saveShort('+q.id+')">💾 保存答案</button><button class="btn btn-success" onclick="showRefAnswer('+q.id+')">📖 参考答案</button></div></div><div class="ref-answer" id="ref_'+q.id+'"><h4>📖 参考答案</h4><p style="white-space:pre-wrap">'+escHtml(q.ans)+'</p></div>'}else if(q.type==='code_fill'){html+=renderCodeFill(q,answered)}if(answered!==undefined&&q.type!=='short'&&q.type!=='code_fill'){let ok=answered===q.ans;html+='<div class="answer-area show"><div class="answer-label">'+(ok?'✅ 回答正确！':'❌ 回答错误')+'</div>'+(q.exp?'<div class="answer-explanation">'+escHtml(q.exp)+'</div>':'')+'</div>'}html+='<div class="btn-group"><label class="auto-toggle"><input type="checkbox" '+(state.autoNext?'checked':'')+' onchange="state.autoNext=this.checked"> 自动下一题</label><button class="btn btn-info" onclick="showCardModal()">📋 答题卡</button><button class="btn btn-secondary" onclick="prevQuestion()">← 上一题</button><button class="btn btn-primary" onclick="nextQuestion()">下一题 →</button><button class="btn btn-warning" onclick="reshuffleQuiz()">🔄 重新洗牌</button></div>';document.getElementById('quiz').innerHTML=html}
+function renderCodeFill(q,answered){if(!q.code||!q.blanks||!q.opts)return'<div style="padding:20px;background:#fff3cd;border-radius:8px;margin:15px 0">⚠️ 题目数据不完整</div>';let parts=q.code.split('____');let html='<div class="fill-code">';parts.forEach((p,i)=>{html+=escHtml(p);if(i<q.blanks.length){let val=state.fillAnswers[q.id+'_'+i];let cls='blank-btn';if(val!==undefined){cls+=' filled';if(answered!==undefined){cls+=val===q.ans[i]?' correct':' wrong'}html+='<span class="'+cls+'" onclick="showFillOptions('+q.id+','+i+',event)">'+escHtml(q.opts[i][val])+'</span>'}else{html+='<span class="'+cls+'" onclick="showFillOptions('+q.id+','+i+',event)">['+q.blanks[i]+']</span>'}}});html+='</div>';if(answered===null||answered===undefined){html+='<div style="text-align:center;margin-top:15px"><button class="btn btn-success" onclick="submitFill('+q.id+')">✅ 提交答案</button></div>'}if(answered!==undefined&&answered!==null){let ok=true;for(let i=0;i<q.ans.length;i++){if(state.fillAnswers[q.id+'_'+i]!==q.ans[i])ok=false}html+='<div class="answer-area show"><div class="answer-label">'+(ok?'✅ 全部正确！':'❌ 部分错误')+'</div><div class="answer-explanation">'+escHtml(q.exp)+'</div></div>'}return html}
+function showFillOptions(qid,bi,e){let q=questions.find(x=>x.id===qid);if(state.answered[qid]!==undefined)return;let popup=document.getElementById('optionsPopup');let html='<div class="popup-title">'+q.blanks[bi]+'</div>';q.opts[bi].forEach((o,i)=>{html+='<div class="popup-option" onclick="selectFill('+qid+','+bi+','+i+')">'+escHtml(o)+'</div>'});popup.innerHTML=html;popup.classList.add('show');let rect=e.target.getBoundingClientRect();popup.style.left=Math.min(rect.left,window.innerWidth-300)+'px';popup.style.top=(rect.bottom+5)+'px';setTimeout(()=>document.addEventListener('click',closeFillPopup,{once:true}),10)}
+function closeFillPopup(){document.getElementById('optionsPopup').classList.remove('show')}
+function selectFill(qid,bi,oi){state.fillAnswers[qid+'_'+bi]=oi;closeFillPopup();renderQuiz()}
+function submitFill(qid){let q=questions.find(x=>x.id===qid);let ok=true;for(let i=0;i<q.blanks.length;i++){if(state.fillAnswers[qid+'_'+i]===undefined){alert('请先完成所有填空！');return}if(state.fillAnswers[qid+'_'+i]!==q.ans[i])ok=false}state.answered[qid]=ok;state.quizStats.total++;if(ok)state.quizStats.correct++;if(!ok&&!state.wrongBook.find(w=>w.id===qid)){state.wrongBook.push({id:qid,type:q.type,q:q.q,chapter:q.chapter,topic:q.topic})}saveState();renderQuiz();updateGlobalStats()}
+function answerQuiz(qid,val){if(state.answered[qid]!==undefined)return;let q=questions.find(x=>x.id===qid);state.answered[qid]=val;let ok=val===q.ans;state.quizStats.total++;if(ok)state.quizStats.correct++;if(!ok&&!state.wrongBook.find(w=>w.id===qid)){state.wrongBook.push({id:qid,type:q.type,q:q.q,chapter:q.chapter,topic:q.topic})}saveState();renderQuiz();updateGlobalStats();if(state.autoNext)setTimeout(nextQuestion,1200)}
+function saveShort(qid){let input=document.getElementById('shortInput_'+qid);if(input)state.answered[qid]=input.value}
+function showRefAnswer(qid){let el=document.getElementById('ref_'+qid);if(el)el.classList.toggle('show')}
+function nextQuestion(){state.quizIndex=(state.quizIndex+1)%state.quizOrder.length;renderQuiz()}
+function prevQuestion(){state.quizIndex=(state.quizIndex-1+state.quizOrder.length)%state.quizOrder.length;renderQuiz()}
+function reshuffleQuiz(){state.quizOrder=shuffle(questions.map((_,i)=>i));state.quizIndex=0;renderQuiz()}
+function filterQuiz(type,btn){state.quizFilter=type;document.querySelectorAll('#quiz .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');if(type==='all'){state.quizOrder=shuffle(questions.map((_,i)=>i))}else{state.quizOrder=shuffle(questions.map((q,i)=>q.type===type?i:-1).filter(i=>i>=0))}state.quizIndex=0;state.answered={};state.fillAnswers={};renderQuiz()}
+function showCardModal(){let grid=document.getElementById('cardGrid');let html='';state.quizOrder.forEach((qi,i)=>{let q=questions[qi],a=state.answered[q.id];let c='card-item';if(a===undefined)c+=' u';else if(a===q.ans||(q.type==='short'&&a))c+=' c';else c+=' w';html+='<div class="'+c+'" onclick="goToQuestion('+i+')">'+(i+1)+'</div>'});grid.innerHTML=html;let stats=document.getElementById('cardStats'),ans=Object.keys(state.answered).length,cor=state.quizStats.correct,wrg=state.quizStats.total-cor;stats.innerHTML='<div class="card-stat"><div class="card-stat-num" style="color:#667eea">'+questions.length+'</div><div class="card-stat-label">总题数</div></div><div class="card-stat"><div class="card-stat-num" style="color:#ff9800">'+ans+'</div><div class="card-stat-label">已答</div></div><div class="card-stat"><div class="card-stat-num" style="color:#4caf50">'+cor+'</div><div class="card-stat-label">正确</div></div><div class="card-stat"><div class="card-stat-num" style="color:#f44336">'+wrg+'</div><div class="card-stat-label">错误</div></div>';document.getElementById('cardModal').classList.add('show')}
+function closeModal(){document.getElementById('cardModal').classList.remove('show')}
+function goToQuestion(i){state.quizIndex=i;closeModal();renderQuiz()}
+function renderWrong(){let html='<h2 class="section-title">📕 错题本</h2>';if(!state.wrongBook.length){html+='<div class="empty-state"><div class="icon">🎉</div><p>暂无错题，继续保持！</p></div>'}else{html+='<div class="wrong-list">';state.wrongBook.forEach(w=>{let t=w.q||'';html+='<div class="wrong-item" onclick="goToWrongQuestion('+w.id+')"><div class="wt">['+getTypeName(w.type)+'] '+escHtml(t.substring(0,60))+(t.length>60?'...':'')+'</div><div class="wm"><span>'+(chapterNames[w.chapter]||'')+'</span><span>'+w.topic+'</span></div></div>'});html+='</div><div style="text-align:center;margin-top:20px"><button class="btn btn-danger" onclick="clearWrongBook()">🗑️ 清空错题本</button></div>'}document.getElementById('wrong').innerHTML=html}
+function goToWrongQuestion(qid){let idx=state.quizOrder.findIndex(i=>questions[i].id===qid);if(idx===-1){state.quizOrder=[questions.findIndex(q=>q.id===qid)];state.quizIndex=0}else state.quizIndex=idx;delete state.answered[qid];switchPage('quiz',document.querySelectorAll('.nav-btn')[3])}
+function clearWrongBook(){if(confirm('确定清空错题本？')){state.wrongBook=[];saveState();renderWrong()}}
+function renderProgress(){let total=questions.length,ans=Object.keys(state.answered).length,pct=total?Math.round(ans/total*100):0,byType={},byCh={};['choice','judge','short','code_fill'].forEach(t=>{let qs=questions.filter(q=>q.type===t),done=qs.filter(q=>state.answered[q.id]!==undefined).length;byType[t]={total:qs.length,done}});for(let c in chapterNames){let qs=questions.filter(q=>q.chapter==c);if(!qs.length)continue;let done=qs.filter(q=>state.answered[q.id]!==undefined).length;byCh[c]={total:qs.length,done}}let html='<h2 class="section-title">📊 总体进度</h2><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span>已完成 '+ans+'/'+total+' 题</span><span>'+pct+'%</span></div><div class="progress-bar-container"><div class="progress-bar" style="width:'+pct+'%"></div></div><div class="card-stats" style="margin:20px 0"><div class="card-stat"><div class="card-stat-num" style="color:#667eea">'+state.quizStats.total+'</div><div class="card-stat-label">总答题次数</div></div><div class="card-stat"><div class="card-stat-num" style="color:#4caf50">'+state.quizStats.correct+'</div><div class="card-stat-label">正确次数</div></div><div class="card-stat"><div class="card-stat-num" style="color:#f44336">'+(state.quizStats.total-state.quizStats.correct)+'</div><div class="card-stat-label">错误次数</div></div><div class="card-stat"><div class="card-stat-num" style="color:#ff9800">'+(state.quizStats.total?Math.round(state.quizStats.correct/state.quizStats.total*100):0)+'%</div><div class="card-stat-label">正确率</div></div></div><h2 class="section-title">📝 按题型进度</h2>';for(let t in byType){let d=byType[t],p=d.total?Math.round(d.done/d.total*100):0;html+='<div style="margin:12px 0"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:'+getTypeColor(t)+'">'+getTypeName(t)+'</span><span>'+d.done+'/'+d.total+' ('+p+'%)</span></div><div class="progress-bar-container"><div class="progress-bar" style="width:'+p+'%;background:'+getTypeColor(t)+'"></div></div></div>'}html+='<h2 class="section-title">📖 按模块进度</h2>';for(let c in byCh){let d=byCh[c],p=d.total?Math.round(d.done/d.total*100):0;html+='<div style="margin:12px 0"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>'+chapterNames[c]+'</span><span>'+d.done+'/'+d.total+' ('+p+'%)</span></div><div class="progress-bar-container"><div class="progress-bar" style="width:'+p+'%"></div></div></div>'}html+='<div style="text-align:center;margin-top:25px"><button class="btn btn-danger" onclick="resetAll()">🗑️ 重置所有进度</button></div>';document.getElementById('progress').innerHTML=html}
+function resetAll(){if(confirm('确定重置所有学习进度？此操作不可恢复！')){state.answered={};state.wrongBook=[];state.quizStats={total:0,correct:0};state.fillAnswers={};saveState();updateGlobalStats();renderProgress()}}
+function updateGlobalStats(){let total=questions.length,ans=Object.keys(state.answered).length,cor=state.quizStats.correct,acc=state.quizStats.total?Math.round(cor/state.quizStats.total*100):0;document.getElementById('globalStats').innerHTML='<div class="stat-item">题库 <b>'+total+'</b> 题</div><div class="stat-item">已答 <b>'+ans+'</b></div><div class="stat-item">正确 <b style="color:#4caf50">'+cor+'</b></div><div class="stat-item">正确率 <b>'+acc+'%</b></div><div class="stat-item">错题 <b style="color:#f44336">'+state.wrongBook.length+'</b></div>'}
+renderOverview();updateGlobalStats();
+</script>
 </body>
 </html>
