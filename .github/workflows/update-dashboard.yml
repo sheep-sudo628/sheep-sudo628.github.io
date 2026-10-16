@@ -33,6 +33,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests pandas lxml html5lib openpyxl
 
+      - name: 数据源可达性探测
+        run: |
+          python - <<'PY'
+          import requests
+          H={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36','Accept-Language':'zh-CN,zh;q=0.9'}
+          urls=[
+           'http://m.offcn.com/gjgwy/kaoshi/4034/',
+           'https://zw.offcn.com/gj/zwph/2027_bmrs_qb_qb_qb_asc.html',
+           'https://ah.huatu.com/zw/bmrs/2027.html',
+           'https://ah.huatu.com/zw/anhui/renshu/',
+          ]
+          for u in urls:
+              try:
+                  r=requests.get(u,headers=H,timeout=15)
+                  print('PROBE', r.status_code, len(r.content), u, flush=True)
+              except Exception as e:
+                  print('PROBE ERR', repr(e), u, flush=True)
+          PY
+
       - name: 抓取 2027 国考报名数据（中公全国汇总 + 华图市县 + 我的条件职位池）
         run: python scrape_2027.py
 
