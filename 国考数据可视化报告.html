@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>国考数据可视化分析报告</title>
+<script src="echarts.min.js?v=9"></script>
+<script src="report_data.js?v=9"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #f0f2f5; color: #1d2129; }
+  .header { background: linear-gradient(135deg, #1890ff, #096dd9); color: #fff; padding: 20px 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+  .header h1 { font-size: 24px; font-weight: 600; }
+  .header p { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+  .tabs { display: flex; background: #fff; padding: 0 32px; border-bottom: 1px solid #e5e6eb; }
+  .tab { padding: 14px 28px; cursor: pointer; font-size: 15px; color: #4e5969; border-bottom: 3px solid transparent; transition: all 0.2s; }
+  .tab.active { color: #1890ff; border-bottom-color: #1890ff; font-weight: 600; }
+  .tab:hover { color: #1890ff; }
+  .page { display: none; padding: 24px 32px; }
+  .page.active { display: block; }
+
+  /* Map page */
+  .map-toolbar { background: #fff; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .breadcrumb { font-size: 14px; color: #4e5969; }
+  .breadcrumb span { color: #1890ff; font-weight: 600; }
+  .breadcrumb .sep { color: #c9cdd4; margin: 0 8px; }
+  .metric-selector { margin-left: auto; display: flex; gap: 8px; }
+  .metric-btn { padding: 6px 16px; border: 1px solid #e5e6eb; border-radius: 6px; cursor: pointer; font-size: 13px; background: #fff; transition: all 0.2s; }
+  .metric-btn.active { background: #1890ff; color: #fff; border-color: #1890ff; }
+  .back-btn { padding: 6px 14px; background: #fff; border: 1px solid #e5e6eb; border-radius: 6px; cursor: pointer; font-size: 13px; color: #4e5969; }
+  .back-btn:hover { border-color: #1890ff; color: #1890ff; }
+  .back-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .map-container { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  #mapChart { width: 100%; height: 620px; }
+  .map-legend { display: flex; justify-content: center; gap: 24px; margin-top: 12px; font-size: 12px; color: #86909c; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-color { width: 16px; height: 12px; border-radius: 2px; }
+
+  .stats-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+  .stat-card { background: #fff; border-radius: 8px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .stat-card .label { font-size: 13px; color: #86909c; }
+  .stat-card .value { font-size: 26px; font-weight: 700; color: #1d2129; margin-top: 4px; }
+  .stat-card .sub { font-size: 12px; color: #86909c; margin-top: 2px; }
+
+  /* Table page */
+  .table-toolbar { background: #fff; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .filter-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .filter-item { display: flex; flex-direction: column; gap: 4px; }
+  .filter-item label { font-size: 12px; color: #86909c; }
+  .filter-item input, .filter-item select { padding: 6px 10px; border: 1px solid #e5e6eb; border-radius: 6px; font-size: 13px; width: 150px; }
+  .filter-item input:focus, .filter-item select:focus { border-color: #1890ff; outline: none; }
+  .btn { padding: 7px 18px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+  .btn-primary { background: #1890ff; color: #fff; }
+  .btn-primary:hover { background: #40a9ff; }
+  .btn-default { background: #f2f3f5; color: #4e5969; }
+  .btn-default:hover { background: #e5e6eb; }
+  .table-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px; color: #86909c; }
+  .table-wrapper { background: #fff; border-radius: 8px; overflow: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.08); max-height: 640px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { position: sticky; top: 0; z-index: 10; }
+  th { background: #f7f8fa; color: #1d2129; font-weight: 600; padding: 12px 10px; text-align: left; border-bottom: 1px solid #e5e6eb; white-space: nowrap; }
+  td { padding: 10px; border-bottom: 1px solid #f2f3f5; white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+  tbody tr:hover { background: #f2f7ff; }
+  .score-cell { font-family: monospace; font-weight: 600; color: #1890ff; }
+  .score-na { color: #c9cdd4; }
+  .pagination { display: flex; justify-content: center; gap: 6px; margin-top: 16px; }
+  .page-btn { padding: 6px 12px; border: 1px solid #e5e6eb; border-radius: 4px; cursor: pointer; font-size: 13px; background: #fff; }
+  .page-btn.active { background: #1890ff; color: #fff; border-color: #1890ff; }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* 弹窗样式 */
+  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+  .modal-content { background: #fff; border-radius: 12px; width: 92%; max-width: 1100px; max-height: 88vh; overflow-y: auto; box-shadow: 0 12px 48px rgba(0,0,0,0.25); }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid #f0f0f0; }
+  .modal-header h3 { font-size: 18px; font-weight: 600; color: #1d2129; }
+  .modal-close { background: none; border: none; font-size: 26px; color: #86909c; cursor: pointer; line-height: 1; }
+  .modal-close:hover { color: #f5222d; }
+  .modal-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; padding: 16px 24px; }
+  .stat-item { background: #f7f9fc; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-item .lbl { font-size: 12px; color: #86909c; }
+  .stat-item .val { font-size: 20px; font-weight: 700; color: #1890ff; margin-top: 4px; }
+  .modal-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 0 24px 24px; }
+  .chart-box { background: #fafbfc; border-radius: 8px; padding: 12px; }
+  .chart-title { font-size: 14px; font-weight: 600; color: #4e5969; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>国家公务员考试数据可视化分析报告</h1>
+  <p>数据范围：2021-2026年进面分数线 · 2027年招考简章 · 共101,829条有效分数记录</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-page="map">🗺️ 地图可视化</div>
+  <div class="tab" data-page="table">📋 岗位筛选</div>
+</div>
+
+<!-- 地图页面 -->
+<div id="page-map" class="page active">
+  <div class="stats-cards">
+    <div class="stat-card"><div class="label">覆盖省份</div><div class="value" id="stat-province">31</div><div class="sub">个省级行政区</div></div>
+    <div class="stat-card"><div class="label">覆盖城市</div><div class="value" id="stat-city">413</div><div class="sub">个地级市</div></div>
+    <div class="stat-card"><div class="label">覆盖区县</div><div class="value" id="stat-district">2636</div><div class="sub">个区县</div></div>
+    <div class="stat-card"><div class="label">全国平均进面分</div><div class="value" id="stat-avg">-</div><div class="sub">历年所有职位</div></div>
+  </div>
+
+  <div class="map-toolbar">
+    <div class="breadcrumb" id="breadcrumb">
+      <span>全国</span>
+    </div>
+    <button class="back-btn" id="backBtn" disabled>← 返回上级</button>
+    <div class="metric-selector">
+      <button class="metric-btn active" data-metric="平均分">平均分</button>
+      <button class="metric-btn" data-metric="最低分">最低分</button>
+      <button class="metric-btn" data-metric="最高分">最高分</button>
+      <button class="metric-btn" data-metric="中位数">中位数</button>
+    </div>
+  </div>
+
+  <div class="map-container">
+    <div id="mapChart"></div>
+    <div class="map-legend">
+      <div class="legend-item"><div class="legend-color" style="background:#f0f5ff"></div>低</div>
+      <div class="legend-item"><div class="legend-color" style="background:#adc6ff"></div></div>
+      <div class="legend-item"><div class="legend-color" style="background:#4080ff"></div></div>
+      <div class="legend-item"><div class="legend-color" style="background:#1d4ed8"></div>高</div>
+    </div>
+  </div>
+
+  <!-- 区县分数分布弹窗 -->
+  <div id="distModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">区县级分数分布</h3>
+        <button class="modal-close" onclick="closeDistModal()">×</button>
+      </div>
+      <div class="modal-stats" id="modalStats"></div>
+      <div class="modal-charts">
+        <div class="chart-box">
+          <div class="chart-title">分数分布直方图</div>
+          <div id="histChart" style="width:100%;height:320px;"></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">箱线图</div>
+          <div id="boxChart" style="width:100%;height:320px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 表格页面 -->
+<div id="page-table" class="page">
+  <div class="table-toolbar">
+    <div class="filter-row" id="filterRow">
+      <div class="filter-item"><label>部门代码</label><input type="text" id="f-deptCode"></div>
+      <div class="filter-item"><label>职位代码</label><input type="text" id="f-posCode"></div>
+      <div class="filter-item"><label>用人司局</label><input type="text" id="f-bureau"></div>
+      <div class="filter-item"><label>专业</label><input type="text" id="f-major"></div>
+      <div class="filter-item"><label>学历</label>
+        <select id="f-edu"><option value="">全部</option></select>
+      </div>
+      <div class="filter-item"><label>基层工作年限</label>
+        <select id="f-years"><option value="">全部</option></select>
+      </div>
+      <div class="filter-item"><label>工作地点</label><input type="text" id="f-location"></div>
+      <div class="filter-item"><label>招考人数≥</label><input type="number" id="f-recruit" min="0"></div>
+    </div>
+    <div class="filter-row" style="margin-top:12px;">
+      <button class="btn btn-primary" onclick="applyFilter()">🔍 筛选</button>
+      <button class="btn btn-default" onclick="resetFilter()">↻ 重置</button>
+      <button class="btn btn-default" onclick="exportCSV()">⬇ 导出CSV</button>
+      <span style="font-size:12px;color:#86909c;margin-left:auto;" id="matchCount">共 0 条记录</span>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>部门代码</th><th>职位代码</th><th>用人司局</th><th>招考人数</th>
+          <th>专业</th><th>学历</th><th>基层工作最低年限</th>
+          <th>工作地点</th><th>备注</th>
+          <th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>2026</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<script>
+// ============ 省份名称映射 ============
+const PROVINCE_FULL = {
+  '北京':'北京市','天津':'天津市','上海':'上海市','重庆':'重庆市',
+  '河北':'河北省','山西':'山西省','辽宁':'辽宁省','吉林':'吉林省',
+  '黑龙江':'黑龙江省','江苏':'江苏省','浙江':'浙江省','安徽':'安徽省',
+  '福建':'福建省','江西':'江西省','山东':'山东省','河南':'河南省',
+  '湖北':'湖北省','湖南':'湖南省','广东':'广东省','海南':'海南省',
+  '四川':'四川省','贵州':'贵州省','云南':'云南省','陕西':'陕西省',
+  '甘肃':'甘肃省','青海':'青海省','台湾':'台湾省',
+  '内蒙古':'内蒙古自治区','广西':'广西壮族自治区','西藏':'西藏自治区',
+  '宁夏':'宁夏回族自治区','新疆':'新疆维吾尔自治区',
+  '香港':'香港特别行政区','澳门':'澳门特别行政区'
+};
+const PROVINCE_SHORT = Object.fromEntries(Object.entries(PROVINCE_FULL).map(([k,v])=>[v,k]));
+
+// ============ 地图逻辑 ============
+const mapData = window.MAP_DATA;
+const chartDom = document.getElementById('mapChart');
+const myChart = echarts.init(chartDom);
+let currentLevel = 0; // 0=全国, 1=省, 2=市
+let currentProvince = null;
+let currentCity = null;
+let currentMetric = '平均分';
+let mapNameCache = {}; // adcode -> name
+
+// 全国统计
+const nationalScores = mapData.province.flatMap(p => Array(p['职位数']).fill(0)); // placeholder
+const allProvAvg = mapData.province.map(p => p['平均分']);
+document.getElementById('stat-avg').textContent = (allProvAvg.reduce((a,b)=>a+b,0)/allProvAvg.length).toFixed(1);
+
+// 加载地图GeoJSON
+async function loadMap(mapName, url) {
+  if (echarts.getMap(mapName)) return;
+  try {
+    const res = await fetch(url);
+    const geo = await res.json();
+    echarts.registerMap(mapName, geo);
+    return geo;
+  } catch(e) {
+    console.error('加载地图失败:', e);
+    return null;
+  }
+}
+
+// 获取各级数据
+function getMapData(level, province, city) {
+  let data;
+  if (level === 0) {
+    data = mapData.province.map(p => ({
+      name: PROVINCE_FULL[p['省']] || p['省'],
+      value: p[currentMetric],
+      raw: p
+    }));
+  } else if (level === 1) {
+    data = mapData.city.filter(c => c['省'] === province).map(c => ({
+      name: c['市'],
+      value: c[currentMetric],
+      raw: c
+    }));
+  } else {
+    data = mapData.district.filter(d => d['省'] === province && d['市'] === city).map(d => ({
+      name: d['区'],
+      value: d[currentMetric],
+      raw: d
+    }));
+  }
+  return data.filter(d => d.value != null);
+}
+
+function renderMap(level, province, city) {
+  const data = getMapData(level, province, city);
+  const values = data.map(d => d.value);
+  const minVal = values.length ? Math.min(...values) : 0;
+  const maxVal = values.length ? Math.max(...values) : 100;
+
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: function(params) {
+        if (!params.data || params.data.value == null) return params.name + '<br/>暂无数据';
+        const r = params.data.raw;
+        return `<b>${params.name}</b><br/>` +
+          `职位数: ${r['职位数']}<br/>` +
+          `最低分: <span style="color:#52c41a">${r['最低分']}</span><br/>` +
+          `最高分: <span style="color:#f5222d">${r['最高分']}</span><br/>` +
+          `平均分: <span style="color:#1890ff;font-weight:bold">${r['平均分']}</span><br/>` +
+          `中位数: ${r['中位数']}`;
+      }
+    },
+    visualMap: {
+      min: minVal,
+      max: maxVal,
+      left: 20,
+      bottom: 20,
+      text: ['高', '低'],
+      calculable: true,
+      inRange: {
+        color: ['#f0f5ff', '#adc6ff', '#4080ff', '#1d4ed8']
+      },
+      textStyle: { color: '#86909c' }
+    },
+    series: [{
+      name: '进面分数',
+      type: 'map',
+      map: level === 0 ? 'china' : (level === 1 ? province : city),
+      roam: true,
+      zoom: level === 0 ? 1.2 : 1,
+      label: {
+        show: level < 2,
+        fontSize: 10,
+        color: '#1d2129'
+      },
+      emphasis: {
+        label: { show: true, fontSize: 12, fontWeight: 'bold' },
+        itemStyle: { areaColor: '#ffd666' }
+      },
+      data: data
+    }]
+  };
+  myChart.setOption(option, true);
+}
+
+// 点击下钻
+async function handleDrillDown(regionName) {
+  if (!regionName) return;
+  console.log('点击区域:', regionName, '当前层级:', currentLevel);
+
+  if (currentLevel === 0) {
+    const shortName = PROVINCE_SHORT[regionName] || regionName.replace(/省|市|自治区|壮族自治区|回族自治区|维吾尔自治区|特别行政区/g, '');
+    currentProvince = shortName;
+    currentLevel = 1;
+    await loadProvinceMap(regionName, shortName);
+    updateBreadcrumb();
+    renderMap(1, shortName, null);
+  } else if (currentLevel === 1) {
+    const hasDistrict = mapData.district.some(d => d['省'] === currentProvince && d['市'] === regionName);
+    if (!hasDistrict) {
+      console.log('该区域无下一级数据');
+      return;
+    }
+    currentCity = regionName;
+    currentLevel = 2;
+    await loadCityMap(currentProvince, regionName);
+    updateBreadcrumb();
+    renderMap(2, currentProvince, regionName);
+  } else if (currentLevel === 2) {
+    // 点击区县 -> 显示分数分布弹窗
+    showDistModal(currentProvince, currentCity, regionName);
+  }
+}
+window.handleDrillDown = handleDrillDown;
+
+myChart.on('click', function(params) {
+  handleDrillDown(params.name);
+});
+
+// ============ 区县分数分布弹窗 ============
+let histChart = null;
+let boxChart = null;
+
+function showDistModal(prov, city, dist) {
+  const data = mapData.district_dist.find(d => d['省'] === prov && d['市'] === city && d['区'] === dist);
+  if (!data) {
+    console.log('该区县暂无分数分布数据');
+    return;
+  }
+
+  document.getElementById('modalTitle').textContent = `${prov} · ${city} · ${dist} 分数分布`;
+
+  // 统计卡片
+  const statsHtml = [
+    { lbl: '职位数', val: data['职位数'] },
+    { lbl: '最低分', val: data['最低分'] },
+    { lbl: '平均分', val: data['平均分'] },
+    { lbl: '中位数', val: data['中位数'] },
+    { lbl: '最高分', val: data['最高分'] },
+  ].map(s => `<div class="stat-item"><div class="lbl">${s.lbl}</div><div class="val">${s.val}</div></div>`).join('');
+  document.getElementById('modalStats').innerHTML = statsHtml;
+
+  document.getElementById('distModal').style.display = 'flex';
+
+  // 渲染直方图
+  setTimeout(() => {
+    if (histChart) histChart.dispose();
+    if (boxChart) boxChart.dispose();
+
+    histChart = echarts.init(document.getElementById('histChart'));
+    const histData = data['直方图'];
+    histChart.setOption({
+      tooltip: {
+        trigger: 'axis',
+        formatter: function(p) {
+          const d = p[0];
+          const b = histData[d.dataIndex];
+          return `分数区间: ${b.min} ~ ${b.max}<br/>职位数: ${b.count}`;
+        }
+      },
+      grid: { left: 50, right: 20, top: 30, bottom: 50 },
+      xAxis: {
+        type: 'category',
+        data: histData.map(b => `${b.min}`),
+        axisLabel: { fontSize: 10, rotate: 30 },
+        name: '最低进面分数',
+        nameLocation: 'middle',
+        nameGap: 35
+      },
+      yAxis: { type: 'value', name: '职位数' },
+      series: [{
+        type: 'bar',
+        data: histData.map(b => b.count),
+        itemStyle: { color: '#1890ff', borderRadius: [4, 4, 0, 0] },
+        barCategoryGap: '10%'
+      }]
+    });
+
+    // 渲染箱线图
+    boxChart = echarts.init(document.getElementById('boxChart'));
+    boxChart.setOption({
+      tooltip: {
+        trigger: 'item',
+        formatter: function() {
+          return [
+            `最大值: ${data['最高分']}`,
+            `上四分位(Q3): ${data['Q3']}`,
+            `中位数: ${data['中位数']}`,
+            `下四分位(Q1): ${data['Q1']}`,
+            `最小值: ${data['最低分']}`,
+            `异常值数: ${data['异常值数']}`
+          ].join('<br/>');
+        }
+      },
+      grid: { left: 60, right: 30, top: 30, bottom: 40 },
+      xAxis: { type: 'category', data: [dist], axisLabel: { fontSize: 12 } },
+      yAxis: { type: 'value', name: '分数' },
+      series: [{
+        type: 'boxplot',
+        data: [[data['须下限'], data['Q1'], data['中位数'], data['Q3'], data['须上限']]],
+        itemStyle: { color: '#69c0ff', borderColor: '#1890ff' },
+        tooltip: {
+          formatter: function(p) {
+            return [
+              `须下限: ${data['须下限']}`,
+              `Q1: ${data['Q1']}`,
+              `中位数: ${data['中位数']}`,
+              `Q3: ${data['Q3']}`,
+              `须上限: ${data['须上限']}`,
+              `异常值: ${data['异常值数']}个`
+            ].join('<br/>');
+          }
+        }
+      }]
+    });
+  }, 50);
+}
+
+function closeDistModal() {
+  document.getElementById('distModal').style.display = 'none';
+  if (histChart) { histChart.dispose(); histChart = null; }
+  if (boxChart) { boxChart.dispose(); boxChart = null; }
+}
+
+// 点击弹窗外部关闭
+document.addEventListener('click', function(e) {
+  if (e.target.id === 'distModal') closeDistModal();
+});
+
+function getGeoJson(mapName) {
+  const m = echarts.getMap(mapName);
+  if (!m) return null;
+  return m.geoJson || m.geoJSON || m;
+}
+
+async function loadProvinceMap(fullName, shortName) {
+  const geo = getGeoJson('china');
+  if (geo && geo.features) {
+    const feat = geo.features.find(f => f.properties.name === fullName);
+    if (feat && feat.properties.adcode) {
+      const adcode = feat.properties.adcode;
+      await loadMap(shortName, `https://geo.datav.aliyun.com/areas_v3/bound/${adcode}_full.json`);
+      return true;
+    }
+  }
+  console.warn('未找到省份:', fullName);
+  return false;
+}
+
+async function loadCityMap(provinceShort, cityName) {
+  const geo = getGeoJson(provinceShort);
+  if (geo && geo.features) {
+    const feat = geo.features.find(f => f.properties.name === cityName);
+    if (feat && feat.properties.adcode) {
+      const adcode = feat.properties.adcode;
+      const url = `https://geo.datav.aliyun.com/areas_v3/bound/${adcode}_full.json`;
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+        echarts.registerMap(cityName, json);
+        return true;
+      } catch(e) {
+        console.warn('加载区县地图失败:', e);
+      }
+    }
+  }
+  // 备用：复用省级地图
+  const provGeo = getGeoJson(provinceShort);
+  if (provGeo) {
+    echarts.registerMap(cityName, provGeo);
+  }
+  return false;
+}
+
+function updateBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  let html = '<span>全国</span>';
+  if (currentLevel >= 1) html += '<span class="sep">›</span><span>' + (PROVINCE_FULL[currentProvince] || currentProvince) + '</span>';
+  if (currentLevel >= 2) html += '<span class="sep">›</span><span>' + currentCity + '</span>';
+  bc.innerHTML = html;
+  document.getElementById('backBtn').disabled = currentLevel === 0;
+}
+
+document.getElementById('backBtn').onclick = function() {
+  if (currentLevel === 2) {
+    currentLevel = 1;
+    currentCity = null;
+  } else if (currentLevel === 1) {
+    currentLevel = 0;
+    currentProvince = null;
+  }
+  updateBreadcrumb();
+  renderMap(currentLevel, currentProvince, currentCity);
+};
+
+// 指标切换
+document.querySelectorAll('.metric-btn').forEach(btn => {
+  btn.onclick = function() {
+    document.querySelectorAll('.metric-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentMetric = this.dataset.metric;
+    renderMap(currentLevel, currentProvince, currentCity);
+  };
+});
+
+// 初始化
+loadMap('china', 'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json').then(() => {
+  renderMap(0, null, null);
+});
+
+window.addEventListener('resize', () => myChart.resize());
+
+// ============ 表格逻辑 ============
+const tableData = window.TABLE_DATA;
+let filteredData = [...tableData];
+let currentPage = 1;
+const PAGE_SIZE = 50;
+
+// 初始化筛选下拉
+const eduSet = new Set(tableData.map(r => r['学历']).filter(Boolean));
+const yearsSet = new Set(tableData.map(r => r['基层工作最低年限']).filter(Boolean));
+const eduSelect = document.getElementById('f-edu');
+const yearsSelect = document.getElementById('f-years');
+eduSet.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; eduSelect.appendChild(o); });
+yearsSet.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; yearsSelect.appendChild(o); });
+
+function applyFilter() {
+  const deptCode = document.getElementById('f-deptCode').value.trim();
+  const posCode = document.getElementById('f-posCode').value.trim();
+  const bureau = document.getElementById('f-bureau').value.trim();
+  const major = document.getElementById('f-major').value.trim();
+  const edu = document.getElementById('f-edu').value;
+  const years = document.getElementById('f-years').value;
+  const location = document.getElementById('f-location').value.trim();
+  const recruit = parseInt(document.getElementById('f-recruit').value) || 0;
+
+  filteredData = tableData.filter(r => {
+    if (deptCode && !String(r['部门代码']).includes(deptCode)) return false;
+    if (posCode && !String(r['职位代码']).includes(posCode)) return false;
+    if (bureau && !String(r['用人司局']).includes(bureau)) return false;
+    if (major && !String(r['专业']).includes(major)) return false;
+    if (edu && r['学历'] !== edu) return false;
+    if (years && r['基层工作最低年限'] !== years) return false;
+    if (location && !String(r['工作地点']).includes(location)) return false;
+    if (recruit && Number(r['招考人数']) < recruit) return false;
+    return true;
+  });
+  currentPage = 1;
+  renderTable();
+}
+
+function resetFilter() {
+  document.querySelectorAll('#filterRow input, #filterRow select').forEach(el => el.value = '');
+  filteredData = [...tableData];
+  currentPage = 1;
+  renderTable();
+}
+
+function renderTable() {
+  document.getElementById('matchCount').textContent = `共 ${filteredData.length.toLocaleString()} 条记录`;
+  const tbody = document.getElementById('tableBody');
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageData = filteredData.slice(start, start + PAGE_SIZE);
+  tbody.innerHTML = pageData.map(r => {
+    const years = ['2021','2022','2023','2024','2025','2026'].map(y => {
+      const v = r[`${y}最低进面分`];
+      return v != null ? `<td class="score-cell">${v}</td>` : `<td class="score-na">-</td>`;
+    }).join('');
+    return `<tr>
+      <td>${r['部门代码']||''}</td>
+      <td>${r['职位代码']||''}</td>
+      <td title="${r['用人司局']||''}">${r['用人司局']||''}</td>
+      <td>${r['招考人数']||0}</td>
+      <td title="${r['专业']||''}">${r['专业']||''}</td>
+      <td>${r['学历']||''}</td>
+      <td>${r['基层工作最低年限']||''}</td>
+      <td title="${r['工作地点']||''}">${r['工作地点']||''}</td>
+      <td title="${(r['备注']||'').toString().slice(0,200)}">${(r['备注']||'').toString().slice(0,30)}${(r['备注']||'').length>30?'...':''}</td>
+      ${years}
+    </tr>`;
+  }).join('');
+  renderPagination();
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+  const pg = document.getElementById('pagination');
+  let html = `<button class="page-btn" ${currentPage<=1?'disabled':''} onclick="goPage(${currentPage-1})">上一页</button>`;
+  const maxBtn = 7;
+  let s = Math.max(1, currentPage - 3);
+  let e = Math.min(totalPages, s + maxBtn - 1);
+  s = Math.max(1, e - maxBtn + 1);
+  for (let i = s; i <= e; i++) {
+    html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+  }
+  html += `<button class="page-btn" ${currentPage>=totalPages?'disabled':''} onclick="goPage(${currentPage+1})">下一页</button>`;
+  html += `<span style="margin-left:12px;color:#86909c;font-size:13px;">${currentPage}/${totalPages} 页</span>`;
+  pg.innerHTML = html;
+}
+
+function goPage(p) {
+  currentPage = p;
+  renderTable();
+  document.querySelector('.table-wrapper').scrollTop = 0;
+}
+
+function exportCSV() {
+  const headers = ['部门代码','职位代码','用人司局','招考人数','专业','学历','基层工作最低年限','工作地点','备注',
+    '2021最低进面分','2022最低进面分','2023最低进面分','2024最低进面分','2025最低进面分','2026最低进面分'];
+  const rows = filteredData.map(r => headers.map(h => {
+    let v = r[h] != null ? r[h] : '';
+    v = String(v).replace(/"/g, '""');
+    return /[",\n]/.test(v) ? `"${v}"` : v;
+  }).join(','));
+  const csv = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '国考2027职位筛选结果.csv';
+  a.click();
+}
+
+// Tab切换
+document.querySelectorAll('.tab').forEach(t => {
+  t.onclick = function() {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('page-' + this.dataset.page).classList.add('active');
+    if (this.dataset.page === 'map') setTimeout(() => myChart.resize(), 100);
+  };
+});
+
+// 初始化表格
+renderTable();
+</script>
+</body>
+</html>

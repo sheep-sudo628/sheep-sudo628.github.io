@@ -1,0 +1,25 @@
+# ===== 运行环境 / 大体积依赖 =====
+node-portable/
+node-portable.zip
+
+# ===== 小程序脚手架（与国考看板项目无关）=====
+src/
+config/
+types/
+package.json
+package-lock.json
+tsconfig.json
+babel.config.js
+project.config.json
+project.tt.json
+
+# ===== Python 缓存 =====
+__pycache__/
+*.pyc
+
+# ===== 编辑器 / 工具临时文件 =====
+.pai/
+.trae-html-share-packages/
+
+# ===== 日志（真实数据快照保留）=====
+*.log

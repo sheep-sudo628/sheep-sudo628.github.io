@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>国考报名实时数据看板</title>
+<script src="echarts.min.js"></script>
+<script src="bmrs_data.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #f0f2f5; color: #1d2129; }
+  .header { background: linear-gradient(135deg, #1890ff, #096dd9); color: #fff; padding: 18px 32px; box-shadow: 0 2px 8px rgba(0,0,0,.15); display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .header h1 { font-size: 22px; font-weight: 600; }
+  .header .badge { background: rgba(255,255,255,.22); padding: 3px 10px; border-radius: 12px; font-size: 13px; }
+  .header .right { margin-left: auto; display: flex; align-items: center; gap: 14px; font-size: 13px; opacity: .95; }
+  .header .right button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .header .right button:hover { background: rgba(255,255,255,.35); }
+  .notice { margin: 14px 32px 0; background: #fffbe6; border: 1px solid #ffe58f; color: #874d00; padding: 10px 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; }
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 16px 32px 0; }
+  @media (max-width: 1200px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 800px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+  .card { background: #fff; border-radius: 10px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .card .label { font-size: 13px; color: #86909c; }
+  .card .value { font-size: 24px; font-weight: 700; margin-top: 6px; color: #1d2129; }
+  .card .value.blue { color: #1890ff; }
+  .card .value.red { color: #f5222d; }
+  .card .sub { font-size: 12px; color: #86909c; margin-top: 3px; }
+  .section { margin: 18px 32px; }
+  .section-title { font-size: 16px; font-weight: 600; color: #1d2129; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .section-title::before { content: ''; width: 4px; height: 16px; background: #1890ff; border-radius: 2px; }
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 1000px) { .chart-grid { grid-template-columns: 1fr; } }
+  .chart-box { background: #fff; border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .chart-box .ct { font-size: 14px; font-weight: 600; color: #4e5969; margin-bottom: 6px; }
+  .chart { width: 100%; height: 360px; }
+  /* table */
+  .toolbar { background: #fff; border-radius: 10px; padding: 14px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.08); display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+  .fi { display: flex; flex-direction: column; gap: 4px; }
+  .fi label { font-size: 12px; color: #86909c; }
+  .fi input, .fi select { padding: 6px 10px; border: 1px solid #e5e6eb; border-radius: 6px; font-size: 13px; width: 160px; }
+  .fi input:focus, .fi select:focus { border-color: #1890ff; outline: none; }
+  .btn { padding: 7px 18px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .btn-primary { background: #1890ff; color: #fff; }
+  .btn-primary:hover { background: #40a9ff; }
+  .btn-default { background: #f2f3f5; color: #4e5969; }
+  .btn-default:hover { background: #e5e6eb; }
+  .tinfo { display: flex; justify-content: space-between; align-items: center; margin: 14px 0 10px; font-size: 13px; color: #86909c; }
+  .tw { background: #fff; border-radius: 10px; overflow: auto; box-shadow: 0 1px 4px rgba(0,0,0,.08); max-height: 660px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { position: sticky; top: 0; z-index: 10; }
+  th { background: #f7f8fa; color: #1d2129; font-weight: 600; padding: 11px 10px; text-align: left; border-bottom: 1px solid #e5e6eb; white-space: nowrap; cursor: pointer; user-select: none; }
+  th.sortable:hover { color: #1890ff; }
+  th .arrow { color: #c9cdd4; font-size: 11px; }
+  th.active .arrow { color: #1890ff; }
+  td { padding: 9px 10px; border-bottom: 1px solid #f2f3f5; white-space: nowrap; max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+  tbody tr:hover { background: #f2f7ff; }
+  .num { font-family: monospace; }
+  .rank-badge { display: inline-block; min-width: 22px; text-align: center; padding: 1px 6px; border-radius: 10px; font-size: 12px; background: #f2f3f5; color: #4e5969; }
+  .rank-badge.top { background: #fff1f0; color: #f5222d; font-weight: 700; }
+  .pager { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 16px 0 8px; }
+  .pager button { padding: 6px 12px; border: 1px solid #e5e6eb; border-radius: 4px; background: #fff; cursor: pointer; font-size: 13px; }
+  .pager button.active { background: #1890ff; color: #fff; border-color: #1890ff; }
+  .pager button:disabled { opacity: .4; cursor: not-allowed; }
+  .empty { text-align: center; color: #86909c; padding: 60px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>国考报名实时数据看板</h1>
+  <span class="badge" id="yearBadge">--</span>
+  <div class="right">
+    <span>更新时间：<b id="updateTime">--</b></span>
+    <span>自动刷新：<b id="countdown">--</b></span>
+    <button onclick="location.replace(location.pathname + '?t=' + Date.now())">立即刷新</button>
+  </div>
+</div>
+
+<div id="notice" class="notice" style="display:none;"></div>
+
+<div class="cards">
+    <div class="card"><div class="label">职位数</div><div class="value" id="c-pos">--</div><div class="sub">全国所有招录职位</div></div>
+    <div class="card"><div class="label">招考总人数</div><div class="value" id="c-plan">--</div><div class="sub">计划录用</div></div>
+    <div class="card"><div class="label">报考总人数</div><div class="value blue" id="c-apply">--</div><div class="sub">累计报名</div></div>
+    <div class="card"><div class="label">审查通过人数</div><div class="value" style="color:#52c41a" id="c-pass">--</div><div class="sub">审核合格</div></div>
+    <div class="card"><div class="label">待审查 / 未通过</div><div class="value" style="color:#fa8c16" id="c-pend">--</div><div class="sub">报考 − 通过</div></div>
+    <div class="card"><div class="label">审查通过率</div><div class="value" style="color:#722ed1" id="c-approve">--</div><div class="sub">通过 / 报考</div></div>
+    <div class="card"><div class="label">平均竞争比</div><div class="value red" id="c-avg">--</div><div class="sub">报考/招考</div></div>
+    <div class="card"><div class="label">最高竞争比</div><div class="value red" id="c-max">--</div><div class="sub">单个职位</div></div>
+  </div>
+
+<div class="section">
+  <div class="section-title">报名趋势</div>
+  <div class="chart-box"><div class="chart" id="trendChart" style="height:300px;"></div></div>
+</div>
+
+<div class="section">
+    <div class="section-title">分布排行</div>
+    <div class="chart-grid">
+      <div class="chart-box"><div class="ct">各省报考人数</div><div class="chart" id="provApply"></div></div>
+      <div class="chart-box"><div class="ct">各省审查通过率</div><div class="chart" id="provApprove"></div></div>
+      <div class="chart-box"><div class="ct">报考人数最多的职位 Top20</div><div class="chart" id="topApply"></div></div>
+      <div class="chart-box"><div class="ct">待审查/未通过最多的职位 Top20</div><div class="chart" id="topPend"></div></div>
+    </div>
+  </div>
+
+<div class="section">
+  <div class="section-title">职位明细</div>
+  <div class="toolbar">
+    <div class="fi"><label>地区</label><select id="f-region"><option value="">全部</option></select></div>
+    <div class="fi"><label>部门名称</label><input type="text" id="f-dept" placeholder="关键词"></div>
+    <div class="fi"><label>用人司局</label><input type="text" id="f-bureau" placeholder="关键词"></div>
+    <div class="fi"><label>职位名称</label><input type="text" id="f-pos" placeholder="关键词"></div>
+    <div class="fi"><label>最低报考人数</label><input type="number" id="f-min" placeholder="0" style="width:110px"></div>
+    <button class="btn btn-primary" onclick="applyFilter()">筛选</button>
+    <button class="btn btn-default" onclick="resetFilter()">重置</button>
+  </div>
+  <div class="tinfo">
+    <span>共 <b id="t-count">0</b> 条职位</span>
+    <span id="t-sort">按报考人数降序</span>
+  </div>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:56px">排名</th>
+          <th data-sort="r">地区</th>
+          <th data-sort="d">部门名称</th>
+          <th data-sort="b">用人司局</th>
+          <th data-sort="p">职位名称</th>
+          <th data-sort="n" class="sortable">招考人数 <span class="arrow">↕</span></th>
+          <th data-sort="a" class="sortable active">报考人数 <span class="arrow">↓</span></th>
+          <th data-sort="g" class="sortable">审查通过 <span class="arrow">↕</span></th>
+          <th data-sort="pend" class="sortable">待审查/未通过 <span class="arrow">↕</span></th>
+          <th data-sort="approvePct" class="sortable">通过率 <span class="arrow">↕</span></th>
+          <th data-sort="ratio" class="sortable">竞争比 <span class="arrow">↕</span></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div class="pager" id="pager"></div>
+</div>
+
+<script>
+const D = window.BMRS_DATA || { year: '--', updateTime: '--', summary: {}, timeseries: [], rows: [] };
+const ROWS = D.rows || [];
+const REG_YEAR = '2027'; // 当前报名年度
+
+/* ---------- 顶部信息 ---------- */
+document.getElementById('yearBadge').textContent = '数据年度 ' + D.year;
+document.getElementById('updateTime').textContent = fmtTime(D.updateTime);
+
+/* ---------- 提示条 ---------- */
+(function(){
+  const n = document.getElementById('notice');
+  const s = D.summary || {};
+  if (!ROWS.length) {
+    n.style.display = 'block';
+    n.innerHTML = '暂无可用报名数据。';
+    return;
+  }
+  if (String(D.year) !== REG_YEAR) {
+    n.style.display = 'block';
+    n.innerHTML = '<b>数据年度：' + D.year + '</b>（当前为最近一次已发布的完整报名数据）。'
+      + REG_YEAR + ' 年度报名数据由数据源每日更新，发布后将自动替换本页内容。';
+  }
+})();
+
+/* ---------- 统计卡片 ---------- */
+const S = D.summary || {};
+const totalPend = Math.max(0, (S.total_apply || 0) - (S.total_pass || 0));
+const approveRate = S.total_apply ? ((S.total_pass / S.total_apply) * 100).toFixed(1) + '%' : '--';
+document.getElementById('c-pos').textContent = num(S.positions);
+document.getElementById('c-plan').textContent = num(S.total_plan);
+document.getElementById('c-apply').textContent = num(S.total_apply);
+document.getElementById('c-pass').textContent = num(S.total_pass);
+document.getElementById('c-pend').textContent = num(totalPend);
+document.getElementById('c-approve').textContent = approveRate;
+document.getElementById('c-avg').textContent = (S.avg_ratio || 0) + ' : 1';
+document.getElementById('c-max').textContent = (S.max_ratio || 0) + ' : 1';
+
+function num(v){ return (v==null?0:v).toLocaleString('en-US'); }
+function fmtTime(ts){
+  if(!ts) return '--';
+  // ts: YYYYmmdd_HHMMSS
+  const m = String(ts).match(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/);
+  if(!m) return ts;
+  return `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}`;
+}
+function ratio(r){ return r.n > 0 ? (r.a / r.n) : 0; }
+function ratioStr(r){ return r.n > 0 ? (r.a / r.n).toFixed(1) : '—'; }
+function pend(r){ return Math.max(0, r.a - r.g); }
+function approvePct(r){ return r.a > 0 ? (r.g / r.a) : 0; }
+function approveStr(r){ return r.a > 0 ? (r.g / r.a * 100).toFixed(1) + '%' : '—'; }
+
+/* ---------- 汇总计算 ---------- */
+const provMap = {};
+ROWS.forEach(r => {
+  const p = provMap[r.r] = provMap[r.r] || { apply:0, pass:0, plan:0, cnt:0 };
+  p.apply += r.a; p.pass += r.g; p.plan += r.n; p.cnt++;
+});
+const provList = Object.entries(provMap).map(([name,v]) => ({
+  name,
+  apply: v.apply,
+  pass: v.pass,
+  plan: v.plan,
+  cnt: v.cnt,
+  ratio: v.plan ? v.apply/v.plan : 0,
+  pendN: Math.max(0, v.apply - v.pass),
+  approve: v.apply ? v.pass / v.apply : 0
+}));
+
+/* ---------- 图表 ---------- */
+const charts = [];
+function initChart(id, option){
+  const el = document.getElementById(id);
+  const c = echarts.init(el);
+  c.setOption(option);
+  charts.push(c);
+  return c;
+}
+
+// 趋势图
+(function(){
+  const ts = (D.timeseries || []).slice().sort((a,b)=> a.ts < b.ts ? -1 : 1);
+  const labels = ts.map(t => fmtTime(t.ts));
+  const apply = ts.map(t => t.total_apply);
+  const pass = ts.map(t => t.total_pass);
+  const pend = ts.map(t => Math.max(0, (t.total_apply||0) - (t.total_pass||0)));
+  initChart('trendChart', {
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['报考总人数','审查通过','待审查/未通过'], right: 10, top: 0 },
+    grid: { left: 70, right: 30, top: 40, bottom: 40 },
+    xAxis: { type: 'category', data: labels, axisLabel: { rotate: labels.length>6?30:0 } },
+    yAxis: { type: 'value', axisLabel: { formatter: v => (v/10000).toFixed(0)+'万' } },
+    series: [
+      { name:'报考总人数', type:'line', smooth:true, data: apply, itemStyle:{color:'#1890ff'}, areaStyle:{opacity:.08} },
+      { name:'审查通过', type:'line', smooth:true, data: pass, itemStyle:{color:'#52c41a'}, areaStyle:{opacity:.12} },
+      { name:'待审查/未通过', type:'line', smooth:true, data: pend, itemStyle:{color:'#fa8c16'}, lineStyle:{type:'dashed'} }
+    ]
+  });
+})();
+
+// 各省报考人数
+(function(){
+  const d = provList.slice().sort((a,b)=> b.apply - a.apply);
+  initChart('provApply', {
+    tooltip: { trigger: 'axis', axisPointer:{type:'shadow'} },
+    grid: { left: 60, right: 20, top: 16, bottom: 60 },
+    xAxis: { type: 'category', data: d.map(x=>x.name), axisLabel:{ rotate:45, fontSize:11 } },
+    yAxis: { type: 'value', axisLabel:{ formatter: v => (v/10000).toFixed(1)+'万' } },
+    series: [{ type:'bar', data: d.map(x=>x.apply), itemStyle:{ color:'#1890ff' } }]
+  });
+})();
+
+// 各省平均竞争比
+(function(){
+  const d = provList.slice().sort((a,b)=> b.ratio - a.ratio);
+  initChart('provApprove', {
+    tooltip: { trigger:'axis', axisPointer:{type:'shadow'}, formatter: p => p[0].name + '<br/>审查通过率：' + (p[0].value*100).toFixed(1) + '%' },
+    grid: { left: 60, right: 20, top: 16, bottom: 60 },
+    xAxis: { type: 'category', data: d.map(x=>x.name), axisLabel:{ rotate:45, fontSize:11 } },
+    yAxis: { type: 'value', axisLabel:{ formatter: v => (v*100).toFixed(0)+'%' } },
+    series: [{ type:'bar', data: d.map(x=>+x.approve.toFixed(3)), itemStyle:{ color:'#722ed1' } }]
+  });
+})();
+
+function topBar(id, list, color, valFmt){
+  const d = list.slice().reverse();
+  initChart(id, {
+    tooltip: { trigger:'axis', axisPointer:{type:'shadow'}, formatter: p => p[0].name + '<br/>' + valFmt(p[0].value) },
+    grid: { left: 200, right: 50, top: 10, bottom: 20 },
+    xAxis: { type:'value' },
+    yAxis: { type:'category', data: d.map(x=>x.label), axisLabel:{ fontSize:11, width:180, overflow:'truncate' } },
+    series: [{ type:'bar', data: d.map(x=>x.value), itemStyle:{ color }, label:{ show:true, position:'right', fontSize:11 } }]
+  });
+}
+
+// Top20 报考人数
+(function(){
+  const d = ROWS.slice().sort((a,b)=> b.a - a.a).slice(0,20)
+    .map(r => ({ label: r.r + ' · ' + r.p, value: r.a }));
+  topBar('topApply', d, '#1890ff', v => '报考人数：' + num(v));
+})();
+
+// Top20 待审查/未通过
+(function(){
+  const d = ROWS.filter(r=> r.a - r.g > 0).sort((a,b)=> (b.a-b.g) - (a.a-a.g)).slice(0,20)
+    .map(r => ({ label: r.r + ' · ' + r.p, value: r.a - r.g }));
+  topBar('topPend', d, '#fa8c16', v => '待审查/未通过：' + num(v));
+})();
+
+window.addEventListener('resize', () => charts.forEach(c => c.resize()));
+
+/* ---------- 表格 ---------- */
+let state = { sort:'a', dir:-1, page:1, size:50 };
+let filtered = ROWS.slice();
+const regions = [...new Set(ROWS.map(r=>r.r))].sort();
+regions.forEach(x => document.getElementById('f-region').add(new Option(x, x)));
+
+function applyFilter(){
+  const reg = document.getElementById('f-region').value;
+  const dept = document.getElementById('f-dept').value.trim();
+  const bur = document.getElementById('f-bureau').value.trim();
+  const pos = document.getElementById('f-pos').value.trim();
+  const min = parseInt(document.getElementById('f-min').value || '0', 10) || 0;
+  filtered = ROWS.filter(r =>
+    (!reg || r.r === reg) &&
+    (!dept || r.d.includes(dept)) &&
+    (!bur || r.b.includes(bur)) &&
+    (!pos || r.p.includes(pos)) &&
+    (r.a >= min)
+  );
+  state.page = 1;
+  render();
+}
+function resetFilter(){
+  ['f-region','f-dept','f-bureau','f-pos','f-min'].forEach(id => document.getElementById(id).value = '');
+  filtered = ROWS.slice();
+  state.page = 1; render();
+}
+
+document.querySelectorAll('th.sortable').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.sort;
+    if (state.sort === key) state.dir = -state.dir; else { state.sort = key; state.dir = -1; }
+    document.querySelectorAll('th').forEach(x => { x.classList.remove('active'); const a=x.querySelector('.arrow'); if(a) a.textContent='↕'; });
+    th.classList.add('active');
+    th.querySelector('.arrow').textContent = state.dir < 0 ? '↓' : '↑';
+    document.getElementById('t-sort').textContent = '按 ' + th.textContent.replace(/[↕↓↑]/g,'').trim() + (state.dir<0?' 降序':' 升序');
+    state.page = 1; render();
+  });
+});
+
+function valueOf(r, key){
+  if (key === 'ratio') return ratio(r);
+  if (key === 'pend') return pend(r);
+  if (key === 'approvePct') return approvePct(r);
+  return r[key];
+}
+function render(){
+  const { sort, dir } = state;
+  filtered.sort((x,y) => {
+    let a = valueOf(x, sort), b = valueOf(y, sort);
+    if (typeof a === 'string') return dir * a.localeCompare(b, 'zh');
+    return dir * (a - b);
+  });
+  const total = filtered.length;
+  const pages = Math.max(1, Math.ceil(total / state.size));
+  if (state.page > pages) state.page = pages;
+  const start = (state.page - 1) * state.size;
+  const pageRows = filtered.slice(start, start + state.size);
+  document.getElementById('t-count').textContent = num(total);
+  const tb = document.getElementById('tbody');
+  if (!total) { tb.innerHTML = '<tr><td colspan="11" class="empty">没有符合条件的职位</td></tr>'; }
+  else {
+    tb.innerHTML = pageRows.map((r, i) => {
+      const rank = start + i + 1;
+      const pd = pend(r);
+      return '<tr>'
+        + '<td><span class="rank-badge ' + (rank<=3?'top':'') + '">' + rank + '</span></td>'
+        + '<td>' + esc(r.r) + '</td>'
+        + '<td title="' + esc(r.d) + '">' + esc(r.d) + '</td>'
+        + '<td title="' + esc(r.b) + '">' + esc(r.b) + '</td>'
+        + '<td title="' + esc(r.p) + '">' + esc(r.p) + '</td>'
+        + '<td class="num">' + num(r.n) + '</td>'
+        + '<td class="num" style="color:#1890ff;font-weight:600">' + num(r.a) + '</td>'
+        + '<td class="num" style="color:#52c41a">' + num(r.g) + '</td>'
+        + '<td class="num" style="color:#fa8c16;font-weight:600">' + num(pd) + '</td>'
+        + '<td class="num" style="color:#722ed1">' + approveStr(r) + '</td>'
+        + '<td class="num" style="color:#f5222d;font-weight:600">' + ratioStr(r) + '</td>'
+        + '</tr>';
+    }).join('');
+  }
+  renderPager(pages);
+}
+function renderPager(pages){
+  const el = document.getElementById('pager');
+  if (pages <= 1) { el.innerHTML = ''; return; }
+  let html = '';
+  const cur = state.page;
+  html += '<button ' + (cur<=1?'disabled':'') + ' onclick="goto(' + (cur-1) + ')">上一页</button>';
+  const items = [];
+  for (let p=1; p<=pages; p++){
+    if (p===1 || p===pages || Math.abs(p-cur)<=2) items.push(p);
+    else if (items[items.length-1] !== '...') items.push('...');
+  }
+  items.forEach(p => {
+    if (p === '...') html += '<span style="color:#c9cdd4">…</span>';
+    else html += '<button class="' + (p===cur?'active':'') + '" onclick="goto(' + p + ')">' + p + '</button>';
+  });
+  html += '<button ' + (cur>=pages?'disabled':'') + ' onclick="goto(' + (cur+1) + ')">下一页</button>';
+  el.innerHTML = html;
+}
+function goto(p){ state.page = p; render(); }
+function esc(s){ return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+document.querySelectorAll('.fi input').forEach(inp => inp.addEventListener('keydown', e => { if(e.key==='Enter') applyFilter(); }));
+
+render();
+
+/* ---------- 自动刷新 ---------- */
+const REFRESH_MS = 10 * 60 * 1000;
+let left = REFRESH_MS / 1000;
+const cd = document.getElementById('countdown');
+function tick(){
+  left--;
+  const m = Math.floor(left/60), s = left%60;
+  cd.textContent = m + '分' + String(s).padStart(2,'0') + '秒后';
+  if (left <= 0) location.replace(location.pathname + '?t=' + Date.now());
+}
+setInterval(tick, 1000);
+</script>
+</body>
+</html>

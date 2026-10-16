@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2027国考报名实时看板</title>
+<script src="echarts.min.js"></script>
+<script src="bmrs27_data.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif; background:#f0f2f5; color:#1d2129; }
+  .header { background:linear-gradient(135deg,#f5222d,#cf1322); color:#fff; padding:18px 32px; box-shadow:0 2px 8px rgba(0,0,0,.15); display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
+  .header h1 { font-size:22px; font-weight:600; }
+  .header .badge { background:rgba(255,255,255,.22); padding:3px 12px; border-radius:12px; font-size:13px; }
+  .header .right { margin-left:auto; display:flex; align-items:center; gap:14px; font-size:13px; }
+  .header .right button { background:rgba(255,255,255,.2); color:#fff; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:13px; }
+  .header .right button:hover { background:rgba(255,255,255,.35); }
+  .live-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#b7eb8f; margin-right:5px; animation:blink 1.4s infinite; }
+  @keyframes blink { 50% { opacity:.3; } }
+  .notice { margin:14px 32px 0; background:#fff1f0; border:1px solid #ffa39e; color:#a8071a; padding:10px 16px; border-radius:8px; font-size:13px; line-height:1.7; }
+  .notice a { color:#cf1322; }
+  .cards { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:16px 32px 0; }
+  @media (max-width:1200px){ .cards{ grid-template-columns:repeat(3,1fr);} }
+  @media (max-width:800px){ .cards{ grid-template-columns:repeat(2,1fr);} }
+  .card { background:#fff; border-radius:10px; padding:16px 18px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  .card .label { font-size:13px; color:#86909c; }
+  .card .value { font-size:25px; font-weight:700; margin-top:6px; }
+  .card .sub { font-size:12px; color:#86909c; margin-top:3px; }
+  .blue{color:#1890ff!important} .green{color:#52c41a!important} .orange{color:#fa8c16!important}
+  .purple{color:#722ed1!important} .red{color:#f5222d!important} .gray{color:#86909c!important}
+  .section { margin:18px 32px; }
+  .section-title { font-size:16px; font-weight:600; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .section-title::before { content:''; width:4px; height:16px; background:#f5222d; border-radius:2px; }
+  .section-title .src { font-size:12px; font-weight:400; color:#86909c; margin-left:8px; }
+  .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:1000px){ .chart-grid{ grid-template-columns:1fr; } }
+  .chart-box { background:#fff; border-radius:10px; padding:14px 16px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  .chart-box .ct { font-size:14px; font-weight:600; color:#4e5969; margin-bottom:6px; }
+  .chart { width:100%; height:340px; }
+  .chart.tall { height:420px; }
+  .toolbar { background:#fff; border-radius:10px; padding:14px 18px; box-shadow:0 1px 4px rgba(0,0,0,.08); display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:14px; }
+  .fi { display:flex; flex-direction:column; gap:4px; }
+  .fi label { font-size:12px; color:#86909c; }
+  .fi select { padding:6px 10px; border:1px solid #e5e6eb; border-radius:6px; font-size:13px; min-width:160px; }
+  .twrap { background:#fff; border-radius:10px; overflow:auto; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { background:#f7f8fa; padding:10px; text-align:left; font-weight:600; border-bottom:1px solid #e5e6eb; white-space:nowrap; }
+  td { padding:9px 10px; border-bottom:1px solid #f2f3f5; white-space:nowrap; }
+  tbody tr:hover { background:#fff1f0; }
+  .num { font-family:monospace; text-align:right; }
+  .rank-badge { display:inline-block; min-width:22px; text-align:center; padding:1px 6px; border-radius:10px; font-size:12px; background:#f2f3f5; color:#4e5969; }
+  .rank-badge.top { background:#fff1f0; color:#f5222d; font-weight:700; }
+  .rank-badge.cold { background:#e8f8f2; color:#0e9f6e; font-weight:700; }
+  .code { font-family:monospace; color:#86909c; font-size:12px; }
+  .ellipsis { max-width:260px; overflow:hidden; text-overflow:ellipsis; }
+  .footer { margin:24px 32px 40px; font-size:12px; color:#86909c; line-height:1.8; }
+  .empty { color:#86909c; text-align:center; padding:40px; }
+  .mycond { background:#fff; border-radius:10px; padding:12px 18px; box-shadow:0 1px 4px rgba(0,0,0,.08); margin-bottom:12px; border-left:4px solid #722ed1; }
+  .mycond .mc-head { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:10px; }
+  .mycond .mc-title { font-size:14px; font-weight:600; color:#722ed1; }
+  .mycond .mc-chk { font-size:13px; color:#4e5969; display:flex; align-items:center; gap:5px; cursor:pointer; }
+  .mycond .mc-btn { background:#722ed1; color:#fff; border:none; padding:5px 12px; border-radius:6px; cursor:pointer; font-size:12px; }
+  .mycond .mc-btn:hover { background:#5a22a3; }
+  .mycond .mc-count { font-size:12px; color:#86909c; margin-left:auto; }
+  .mycond .mc-fields { display:flex; gap:12px; flex-wrap:wrap; }
+  .mycond .mc-fields .fi input { padding:6px 10px; border:1px solid #e5e6eb; border-radius:6px; font-size:13px; width:170px; }
+  .mycond.mc-off .mc-fields { opacity:.45; pointer-events:none; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>2027 国考报名实时看板</h1>
+  <span class="badge">报名进行中</span>
+  <div class="right">
+    <span><span class="live-dot"></span>数据时点：<b id="asof">--</b></span>
+    <span>抓取时间：<b id="ts">--</b></span>
+    <span>自动刷新：<b id="countdown">--</b></span>
+    <button onclick="location.replace(location.pathname+'?t='+Date.now())">立即刷新</button>
+  </div>
+</div>
+
+<div id="notice" class="notice">
+  <b>报名时间：2026年10月15日 8:00 — 10月24日 18:00</b>（共10天）。本页数据在报名期内每2小时自动抓取更新；
+  全国/省级数据来自中公教育每日统计，市级/区县数据来自华图教育，第三方统计时点与口径可能略有差异，最终以官方公布为准。
+</div>
+
+<div class="cards">
+  <div class="card"><div class="label">累计报考人数</div><div class="value blue" id="c-apply">--</div><div class="sub">已提交报名申请</div></div>
+  <div class="card"><div class="label">审查通过人数</div><div class="value green" id="c-pass">--</div><div class="sub">资格审核通过</div></div>
+  <div class="card"><div class="label">待审查人数</div><div class="value orange" id="c-pend">--</div><div class="sub">尚未完成审查</div></div>
+  <div class="card"><div class="label">审查通过率</div><div class="value purple" id="c-approve">--</div><div class="sub">通过 / 报考</div></div>
+  <div class="card"><div class="label">平均竞争比</div><div class="value red" id="c-ratio">--</div><div class="sub">报考 / 计划招录 35,691 人</div></div>
+  <div class="card"><div class="label">无人报考职位</div><div class="value gray" id="c-zero">--</div><div class="sub">占 19,426 个职位</div></div>
+  <div class="card"><div class="label">报名不足 5 人职位</div><div class="value gray" id="c-low">--</div><div class="sub">报名人数低于 5</div></div>
+  <div class="card"><div class="label">已覆盖招录计划</div><div class="value" id="c-planrate">--</div><div class="sub">按报考/招录估算热度</div></div>
+</div>
+
+<div class="section">
+  <div class="section-title">报名总量趋势<span class="src">按第三方每日发布时点累计</span></div>
+  <div class="chart-box"><div class="chart" id="trendChart" style="height:300px"></div></div>
+</div>
+
+<div class="section">
+  <div class="section-title">各省报名情况<span class="src">来源：中公教育（与全国总数同一时点口径）</span></div>
+  <div class="chart-grid">
+    <div class="chart-box"><div class="ct">各省报考人数</div><div class="chart" id="provApply"></div></div>
+    <div class="chart-box"><div class="ct">各省平均竞争比</div><div class="chart" id="provRatio"></div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">市级 / 区县级下钻<span class="src">来源：华图教育（更新时点可能略晚于省级数据）· 上方"选择地区"同时驱动下方热门 / 冷门职位表</span></div>
+  <div class="mycond" id="mcPanel">
+    <div class="mc-head">
+      <span class="mc-title">我的条件</span>
+      <label class="mc-chk"><input type="checkbox" id="mcOn" checked> 启用筛选（按我的条件重算下方下钻与榜单）</label>
+      <button class="mc-btn" id="mcReset">恢复默认</button>
+      <span class="mc-count" id="mcCount"></span>
+    </div>
+    <div class="mc-fields">
+      <div class="fi"><label>专业（包含匹配）</label><input id="mcMajor" value="电子信息类" placeholder="如：电子信息类"></div>
+      <div class="fi"><label>政治面貌</label>
+        <select id="mcParty">
+          <option value="中共党员" selected>中共党员</option>
+          <option value="共青团员">共青团员</option>
+          <option value="">不限</option>
+        </select></div>
+      <div class="fi"><label>学历</label>
+        <select id="mcEdu">
+          <option value="本科" selected>本科</option>
+          <option value="大专">大专</option>
+          <option value="硕士研究生">硕士研究生</option>
+          <option value="">不限</option>
+        </select></div>
+      <div class="fi"><label>考生身份</label>
+        <select id="mcFresh">
+          <option value="1" selected>2027应届（基层年限不限）</option>
+          <option value="">不限</option>
+        </select></div>
+      <div class="fi"><label>性别（按职位简介近似）</label>
+        <select id="mcSex">
+          <option value="男" selected>男</option>
+          <option value="女">女</option>
+          <option value="">不限</option>
+        </select></div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="fi"><label>选择地区</label><select id="provSel"></select></div>
+    <div class="fi"><label>排序</label>
+      <select id="citySort">
+        <option value="apply">按报考人数</option>
+        <option value="ratio">按竞争比</option>
+        <option value="plan">按招录人数</option>
+      </select>
+    </div>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box"><div class="ct" id="cityChartTitle">各市/区县报考人数</div><div class="chart tall" id="cityChart"></div></div>
+    <div class="twrap"><table id="cityTable">
+      <thead><tr><th>排名</th><th>地区</th><th class="num">职位数</th><th class="num">招录人数</th><th class="num">报考人数</th><th class="num">竞争比</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">热门职位 Top 10<span class="src">当前地区：<b id="hotScope">全国</b> · 来源：全国=中公教育，省级=华图教育</span></div>
+  <div class="chart-grid">
+    <div class="twrap">
+      <table>
+        <thead><tr><th colspan="6" style="text-align:center;color:#f5222d">报考人数最多的职位 Top10</th></tr>
+        <tr><th>#</th><th>部门 / 职位</th><th class="num">招录</th><th class="num">报考</th><th class="num">竞争比</th></tr></thead>
+        <tbody id="topApplyBody"></tbody>
+      </table>
+    </div>
+    <div class="twrap">
+      <table>
+        <thead><tr><th colspan="6" style="text-align:center;color:#f5222d">竞争比最高的职位 Top10</th></tr>
+        <tr><th>#</th><th>部门 / 职位</th><th class="num">招录</th><th class="num">报考</th><th class="num">竞争比</th></tr></thead>
+        <tbody id="topRatioBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">冷门职位 Top 10<span class="src">当前地区：<b id="coldScope">全国</b> · 捡漏参考 · 来源：中公职位库实时升序榜</span></div>
+  <div class="chart-grid">
+    <div class="twrap">
+      <table>
+        <thead><tr><th colspan="6" style="text-align:center;color:#0e9f6e">报考人数最少的职位 Top10</th></tr>
+        <tr><th>#</th><th>地区 / 部门 / 职位</th><th class="num">招录</th><th class="num">报考</th><th class="num">过审</th><th class="num">竞争比</th></tr></thead>
+        <tbody id="minApplyBody"></tbody>
+      </table>
+    </div>
+    <div class="twrap">
+      <table>
+        <thead><tr><th colspan="6" style="text-align:center;color:#0e9f6e">竞争比最低的职位 Top10</th></tr>
+        <tr><th>#</th><th>地区 / 部门 / 职位</th><th class="num">招录</th><th class="num">报考</th><th class="num">过审</th><th class="num">竞争比</th></tr></thead>
+        <tbody id="minRatioBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="footer" id="footer"></div>
+
+<script>
+const D = window.BMRS27 || null;
+const charts = [];
+function num(v){ return (v==null?0:v).toLocaleString('en-US'); }
+function initChart(id, opt){
+  const c = echarts.init(document.getElementById(id));
+  c.setOption(opt);
+  charts.push(c);
+  return c;
+}
+function fmtTs(ts){
+  const m = String(ts||'').match(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/);
+  return m ? `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}` : (ts||'--');
+}
+
+if (!D || !D.national || D.national.apply == null) {
+  document.querySelector('.cards').insertAdjacentHTML('afterend',
+    '<div class="section"><div class="chart-box empty">暂无 2027 报名数据，请等待定时抓取（数据通常在每日下午发布）。</div></div>');
+} else {
+  render();
+}
+
+function render(){
+  const N = D.national;
+  document.getElementById('asof').textContent = '截至 ' + (D.asof || '--');
+  document.getElementById('ts').textContent = fmtTs(D.ts);
+
+  /* 卡片 */
+  document.getElementById('c-apply').textContent = num(N.apply);
+  document.getElementById('c-pass').textContent = num(N.pass);
+  document.getElementById('c-pend').textContent = num(N.pend);
+  document.getElementById('c-approve').textContent = N.approve_rate != null ? N.approve_rate + '%' : '--';
+  document.getElementById('c-ratio').textContent = (N.avg_ratio||0) + ' : 1';
+  document.getElementById('c-zero').textContent = num(N.zero_positions);
+  document.getElementById('c-low').textContent = num(N.low_positions);
+  const zeroRate = N.zero_positions != null ? (N.zero_positions / N.positions_total * 100).toFixed(1) : null;
+  document.getElementById('c-planrate').textContent = zeroRate != null ? zeroRate + '%' : '--';
+  document.getElementById('c-planrate').nextElementSibling.textContent = '无人报考职位占比';
+
+  /* 趋势 */
+  const series = (D.series||[]).slice().sort((a,b)=> a.ts < b.ts ? -1 : 1);
+  initChart('trendChart', {
+    tooltip:{ trigger:'axis' },
+    legend:{ data:['累计报考','审查通过','待审查'], right:10, top:0 },
+    grid:{ left:70, right:30, top:40, bottom:40 },
+    xAxis:{ type:'category', data: series.map(s => s.asof || fmtTs(s.ts)) },
+    yAxis:{ type:'value', axisLabel:{ formatter: v => (v/10000).toFixed(1)+'万' } },
+    series:[
+      { name:'累计报考', type:'line', smooth:true, symbolSize:9, data:series.map(s=>s.apply), itemStyle:{color:'#1890ff'}, areaStyle:{opacity:.1} },
+      { name:'审查通过', type:'line', smooth:true, symbolSize:9, data:series.map(s=>s.pass), itemStyle:{color:'#52c41a'} },
+      { name:'待审查', type:'line', smooth:true, symbolSize:9, data:series.map(s=>s.pend), itemStyle:{color:'#fa8c16'}, lineStyle:{type:'dashed'} }
+    ]
+  });
+
+  /* 各省 */
+  const prov = (D.provinces||[]).slice();
+  const byApply = prov.slice().sort((a,b)=>b.apply-a.apply);
+  initChart('provApply', {
+    tooltip:{ trigger:'axis', axisPointer:{type:'shadow'} },
+    grid:{ left:60, right:20, top:16, bottom:60 },
+    xAxis:{ type:'category', data:byApply.map(x=>x.name), axisLabel:{ rotate:45, fontSize:11 } },
+    yAxis:{ type:'value', axisLabel:{ formatter:v=>(v/10000).toFixed(1)+'万' } },
+    series:[{ type:'bar', data:byApply.map(x=>x.apply), itemStyle:{color:'#1890ff'} }]
+  });
+  const byRatio = prov.slice().sort((a,b)=>b.ratio-a.ratio);
+  initChart('provRatio', {
+    tooltip:{ trigger:'axis', axisPointer:{type:'shadow'}, formatter:p=>p[0].name+'<br/>平均竞争比：'+p[0].value.toFixed(1)+' : 1' },
+    grid:{ left:60, right:20, top:16, bottom:60 },
+    xAxis:{ type:'category', data:byRatio.map(x=>x.name), axisLabel:{ rotate:45, fontSize:11 } },
+    yAxis:{ type:'value' },
+    series:[{ type:'bar', data:byRatio.map(x=>x.ratio), itemStyle:{color:'#f5222d'} }]
+  });
+
+  /* 我的条件 职位池筛选 */
+  const pool = (D.profile_pool && D.profile_pool.length) ? D.profile_pool : null;
+  const mcPanel = document.getElementById('mcPanel');
+  const mc$ = id => document.getElementById(id);
+  const MUNI = ['北京', '上海', '天津', '重庆'];
+  function mcOn(){ return !!(pool && mc$('mcOn').checked); }
+  /* 学历近似: 要求含"本科"或"大专及以上"等即本科可报 */
+  function eduOk(edu, level){
+    if (!level) return true;
+    edu = edu || '';
+    if (/不限/.test(edu)) return true;
+    if (level === '本科') return /本科|大专及以上|大专或本科/.test(edu);
+    if (level === '大专') return /大专/.test(edu);
+    if (level === '硕士研究生') return /硕士|研究生及以上|本科及以上|大专及以上/.test(edu);
+    return edu.includes(level);
+  }
+  /* 政治面貌近似: 职位要求不高于本人条件即可报 */
+  function partyOk(posParty, userParty){
+    if (!userParty) return true;
+    posParty = posParty || '不限';
+    if (/不限|群众/.test(posParty)) return true;
+    if (userParty === '中共党员') return /中共党员/.test(posParty);
+    if (userParty === '共青团员') return /共青团员|中共党员或/.test(posParty);
+    return posParty.includes(userParty);
+  }
+  function filterPool(){
+    const major = mc$('mcMajor').value.trim();
+    const party = mc$('mcParty').value;
+    const edu = mc$('mcEdu').value;
+    const fresh = mc$('mcFresh').value;
+    const sex = mc$('mcSex').value;
+    return pool.filter(r => {
+      if (major && !(r.major || '').includes(major)) return false;
+      if (party && !partyOk(r.party, party)) return false;
+      if (edu && !eduOk(r.edu, edu)) return false;
+      if (fresh && !/无限制/.test(r.exp || '')) return false;
+      if (sex === '男' && r.fem) return false;   // 数据源无性别字段: 按职位简介"限女性"近似排除
+      return true;
+    });
+  }
+  function updateMcCount(){
+    if (!pool){
+      mc$('mcOn').checked = false;
+      mcPanel.classList.add('mc-off');
+      mc$('mcCount').textContent = '职位池未就绪, 等待下次抓取';
+      return;
+    }
+    const rows = filterPool();
+    const plan = rows.reduce((s,r)=>s+(r.plan||0), 0);
+    const apply = rows.reduce((s,r)=>s+(r.apply||0), 0);
+    mc$('mcCount').textContent = '符合 ' + rows.length + ' 个职位 · 招录 ' + num(plan)
+      + ' 人 · 已报考 ' + num(apply) + ' 人' + (mc$('mcOn').checked ? '' : '（未启用）');
+  }
+
+  /* 市级下钻 */
+  const sel = document.getElementById('provSel');
+  const ALL = '全国';
+  sel.add(new Option('全国（汇总）', ALL));
+  const cityNames = Object.keys(D.cities||{});
+  cityNames.forEach(n => sel.add(new Option(n, n)));
+  sel.value = ALL;
+  let cityChart = null;
+  function drawCity(){
+    const provName = sel.value;
+    const tb = document.querySelector('#cityTable tbody');
+    if (provName === ALL){
+      if (cityChart) cityChart.clear();
+      document.getElementById('cityChartTitle').textContent = '请选择省份查看市级 / 区县下钻';
+      tb.innerHTML = '<tr><td colspan="6" style="color:#86909c;text-align:center;padding:40px">'
+        + '请从上方「选择地区」中选择省份，查看该省各市 / 区县报名数据</td></tr>';
+      return;
+    }
+    const sortKey = document.getElementById('citySort').value;
+    let rows;
+    if (mcOn()){
+      // 我的条件: 中公职位池按市/区县聚合重算(直辖市按区)
+      const byDist = MUNI.includes(provName);
+      const g = {};
+      filterPool().forEach(r => {
+        if (r.region !== provName) return;
+        const key = (byDist ? (r.district || r.city) : (r.city || r.region)) || '';
+        if (!key) return;
+        const o = g[key] || (g[key] = { name: key, positions: 0, plan: 0, apply: 0 });
+        o.positions++; o.plan += r.plan || 0; o.apply += r.apply || 0;
+      });
+      rows = Object.values(g).map(o => Object.assign(o, {
+        ratio: o.plan ? +(o.apply / o.plan).toFixed(2) : 0
+      })).sort((a,b)=> b[sortKey] - a[sortKey]);
+    } else {
+      // 剔除页面自带的省级"汇总"行, 只保留市/区县
+      rows = (D.cities[provName]||[]).filter(x => x.name !== '汇总')
+        .slice().sort((a,b)=> b[sortKey]-a[sortKey]);
+    }
+    if (!rows.length){
+      if (cityChart) cityChart.clear();
+      document.getElementById('cityChartTitle').textContent = provName + ' · 无匹配数据';
+      tb.innerHTML = '<tr><td colspan="6" style="color:#86909c;text-align:center;padding:40px">'
+        + (mcOn() ? '该地区暂无符合「我的条件」的职位' : '该地区暂无数据') + '</td></tr>';
+      return;
+    }
+    const d = rows.slice().reverse();
+    const opt = {
+      tooltip:{ trigger:'axis', axisPointer:{type:'shadow'},
+        formatter:p => p[0].name + '<br/>' + ({apply:'报考人数',ratio:'竞争比',plan:'招录人数'})[sortKey] + '：' +
+          (sortKey==='ratio' ? p[0].value.toFixed(1)+' : 1' : num(p[0].value)) },
+      grid:{ left:90, right:50, top:10, bottom:20 },
+      xAxis:{ type:'value' },
+      yAxis:{ type:'category', data:d.map(x=>x.name), axisLabel:{ fontSize:11 } },
+      series:[{ type:'bar',
+        data:d.map(x=>({ value:x[sortKey], itemStyle:{ color: sortKey==='ratio' ? '#f5222d' : '#1890ff' } })),
+        label:{ show:true, position:'right', fontSize:11,
+          formatter:p => sortKey==='ratio' ? p.value.toFixed(1) : num(p.value) } }]
+    };
+    if (!cityChart) cityChart = echarts.init(document.getElementById('cityChart'));
+    cityChart.setOption(opt, true);
+    document.getElementById('cityChartTitle').textContent =
+      provName + ' 各' + (MUNI.includes(provName) ? '区' : '市/州/盟') + '「' +
+      ({apply:'报考人数',ratio:'竞争比',plan:'招录人数'})[sortKey] + '」' + (mcOn() ? '（我的条件）' : '');
+    tb.innerHTML = rows.map((r,i)=>
+      '<tr><td><span class="rank-badge '+(i<3?'top':'')+'">'+(i+1)+'</span></td>'
+      +'<td>'+r.name+'</td><td class="num">'+num(r.positions)+'</td><td class="num">'+num(r.plan)+'</td>'
+      +'<td class="num" style="color:#1890ff;font-weight:600">'+num(r.apply)+'</td>'
+      +'<td class="num" style="color:#f5222d">'+r.ratio.toFixed(1)+'</td></tr>').join('');
+  }
+  sel.addEventListener('change', ()=>{ drawCity(); drawTopTables(); });
+  document.getElementById('citySort').addEventListener('change', drawCity);
+  drawCity();
+
+  /* Top10 职位 - 随「选择地区」联动 */
+  const dashN = v => (v === null || v === undefined) ? '—' : num(v);
+  const dashR = v => (v === null || v === undefined) ? '—' : Number(v).toFixed(1);
+  function posRow(r, i){
+    return '<tr><td><span class="rank-badge '+(i<3?'top':'')+'">'+(i+1)+'</span></td>'
+      + '<td><div class="ellipsis" title="'+esc(r.dept+' · '+r.position)+'"><b>'+esc(r.dept)+'</b><br>'
+      + '<span style="color:#4e5969">'+esc(r.position)+'</span></div>'
+      + (r.code ? '<div class="code">'+r.code+'</div>' : '') + '</td>'
+      + '<td class="num">'+dashN(r.plan)+'</td>'
+      + '<td class="num" style="color:#1890ff;font-weight:600">'+dashN(r.apply)+'</td>'
+      + '<td class="num" style="color:#f5222d;font-weight:600">'+dashR(r.ratio)+'</td></tr>';
+  }
+  /* 冷门 Top10 职位(中公职位库: 含地区/司局/过审) */
+  function coldRow(r, i){
+    return '<tr><td><span class="rank-badge cold">'+(i+1)+'</span></td>'
+      + '<td><div class="ellipsis" title="'+esc(r.region+' · '+r.dept+' · '+r.bureau+' · '+r.position)+'">'
+      + '<span style="color:#0e9f6e;font-weight:600">'+esc(r.region)+'</span> · <b>'+esc(r.dept)+'</b><br>'
+      + '<span style="color:#4e5969">'+esc(r.bureau)+' · '+esc(r.position)+'</span></div>'
+      + (r.code ? '<div class="code">'+r.code+'</div>' : '') + '</td>'
+      + '<td class="num">'+dashN(r.plan)+'</td>'
+      + '<td class="num" style="color:#0e9f6e;font-weight:700">'+dashN(r.apply)+'</td>'
+      + '<td class="num">'+dashN(r.pass)+'</td>'
+      + '<td class="num" style="color:#0e9f6e;font-weight:600">'+dashR(r.ratio)+'</td></tr>';
+  }
+  function fill(id, rows, fn, emptyMsg){
+    document.getElementById(id).innerHTML = (rows && rows.length)
+      ? rows.map(fn).join('')
+      : '<tr><td colspan="6" style="color:#86909c;text-align:center;padding:24px">'+(emptyMsg||'暂无数据')+'</td></tr>';
+  }
+  function drawTopTables(){
+    const p = sel.value, isAll = (p === ALL);
+    const on = mcOn();
+    document.getElementById('hotScope').textContent = (isAll ? '全国' : p) + (on ? ' · 我的条件' : '');
+    document.getElementById('coldScope').textContent = (isAll ? '全国' : p) + (on ? ' · 我的条件' : '');
+    if (on){
+      const rows = isAll ? filterPool() : filterPool().filter(r => r.region === p);
+      fill('topApplyBody', rows.slice().sort((a,b)=>b.apply-a.apply).slice(0,10), posRow, '无符合「我的条件」的职位');
+      fill('topRatioBody', rows.slice().sort((a,b)=>b.ratio-a.ratio).slice(0,10), posRow, '无符合「我的条件」的职位');
+      fill('minApplyBody', rows.slice().sort((a,b)=>a.apply-b.apply).slice(0,10), coldRow, '无符合「我的条件」的职位');
+      fill('minRatioBody', rows.slice().sort((a,b)=>a.ratio-b.ratio).slice(0,10), coldRow, '无符合「我的条件」的职位');
+      return;
+    }
+    fill('topApplyBody', isAll ? D.pos_apply_top : (D.prov_hot||{})[p], posRow, '该地区暂无数据');
+    fill('topRatioBody', isAll ? D.pos_ratio_top : (D.prov_ratio_high||{})[p], posRow, '该地区暂无数据');
+    fill('minApplyBody', isAll ? D.min_apply_top : (D.prov_min_apply||{})[p], coldRow, '该地区暂无数据');
+    fill('minRatioBody', isAll ? D.min_ratio_top : (D.prov_ratio_low||{})[p], coldRow, '该地区暂无数据');
+  }
+  drawTopTables();
+
+  /* 我的条件 交互 */
+  ['mcParty','mcEdu','mcFresh','mcSex'].forEach(id => {
+    mc$(id).addEventListener('change', ()=>{ drawCity(); drawTopTables(); updateMcCount(); });
+  });
+  mc$('mcMajor').addEventListener('input', ()=>{ drawCity(); drawTopTables(); updateMcCount(); });
+  mc$('mcOn').addEventListener('change', ()=>{
+    mcPanel.classList.toggle('mc-off', !mc$('mcOn').checked);
+    drawCity(); drawTopTables(); updateMcCount();
+  });
+  mc$('mcReset').addEventListener('click', ()=>{
+    mc$('mcMajor').value = '电子信息类';
+    mc$('mcParty').value = '中共党员';
+    mc$('mcEdu').value = '本科';
+    mc$('mcFresh').value = '1';
+    mc$('mcSex').value = '男';
+    mc$('mcOn').checked = true;
+    mcPanel.classList.remove('mc-off');
+    drawCity(); drawTopTables(); updateMcCount();
+  });
+  updateMcCount();
+
+  window.addEventListener('resize', ()=>{ charts.forEach(c=>c.resize()); if(cityChart) cityChart.resize(); });
+
+  document.getElementById('footer').innerHTML =
+    '数据来源：<a href="'+(D.sources&&D.sources.offcn||'#')+'" target="_blank">中公教育每日报名统计</a>'
+    + '（截至 '+(D.asof||'')+'）、<a href="'+(D.sources&&D.sources.huatu||'#')+'" target="_blank">华图教育职位库</a>（市级/区县）。<br>'
+    + '抓取时间：' + fmtTs(D.ts) + '。报名期（10月15日—24日）每2小时自动更新；第三方统计口径与时点可能存在差异，仅供参考，最终以国家公务员局官方公布为准。';
+}
+
+function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* 自动刷新 10 分钟 */
+let left = 600;
+const cd = document.getElementById('countdown');
+function tick(){
+  left--;
+  cd.textContent = Math.floor(left/60)+'分'+String(left%60).padStart(2,'0')+'秒后';
+  if (left<=0) location.replace(location.pathname+'?t='+Date.now());
+}
+if (cd) setInterval(tick, 1000);
+</script>
+</body>
+</html>
