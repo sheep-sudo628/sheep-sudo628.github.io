@@ -11,3 +11,6 @@ echo [%date% %time%] === 2027 daily exit=%errorlevel% === >> "data\bmrs\scrape.l
 echo [%date% %time%] === rank full start === >> "data\bmrs\scrape.log"
 "%PY%" scrape_bmrs.py >> "data\bmrs\scrape.log" 2>&1
 echo [%date% %time%] === rank full exit=%errorlevel% === >> "data\bmrs\scrape.log"
+echo [%date% %time%] === deploy pages start === >> "data\bmrs\scrape.log"
+call "%~dp0deploy_pages.bat"
+echo [%date% %time%] === deploy pages exit=%errorlevel% === >> "data\bmrs\scrape.log"
