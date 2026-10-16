@@ -1,0 +1,57 @@
+name: 定时抓取国考数据并更新看板
+
+# 仅定时与手动触发；不监听 push，避免提交后循环触发
+on:
+  schedule:
+    # UTC 每 2 小时的 23 分（北京时间 0:23 / 2:23 / …，覆盖全天发布时点；
+    # GitHub 定时任务高峰期可能延迟数分钟至数十分钟，属正常）
+    - cron: '23 */2 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scrape-guokao
+  cancel-in-progress: false
+
+jobs:
+  scrape-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pandas lxml html5lib openpyxl
+
+      - name: 抓取 2027 国考报名数据（中公全国汇总 + 华图市县 + 我的条件职位池）
+        run: python scrape_2027.py
+
+      - name: 抓取职位排行数据（失败不阻断主看板更新）
+        continue-on-error: true
+        run: python scrape_bmrs.py
+
+      # 主看板始终与根入口 index.html 保持一致
+      - name: 同步根入口
+        run: cp -f "2027国考报名实时看板.html" index.html
+
+      - name: 有新数据则提交并推送（Pages 自动重建）
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "数据源暂无新内容，本次跳过提交"
+          else
+            git commit -m "自动更新：$(date -u +'%Y-%m-%d %H:%M UTC') 抓取数据"
+            git push
+          fi
