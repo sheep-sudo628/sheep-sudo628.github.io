@@ -591,8 +591,11 @@ def parse_hot_table(html):
 
 def fetch_one_city(session_name, prov):
     s = requests.Session()
-    html = get(s, HUATU_CITY.format(p=session_name))
-    return prov, parse_city_table(html), parse_hot_table(html)
+    try:
+        html = get(s, HUATU_CITY.format(p=session_name))
+        return prov, parse_city_table(html), parse_hot_table(html)
+    except Exception:  # 单省被WAF拦截不影响其他省
+        return prov, [], []
 
 
 def scrape_huatu_cities():
@@ -653,12 +656,33 @@ def main():
     os.makedirs(OUTDIR, exist_ok=True)
     session = requests.Session()
     ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+    prev = load_prev_snapshot()
 
     print('== 1. 中公全国汇总 ==', flush=True)
-    offcn = scrape_offcn(session)
+    offcn_ok = False
+    try:
+        offcn = scrape_offcn(session)
+        offcn_ok = bool(offcn.get('provinces') and offcn['national'].get('apply'))
+    except Exception as e:  # noqa - 云端(GitHub Actions IP)可能被中公WAF拦截
+        print('   中公全国汇总抓取失败，全国数据沿用最近快照:', repr(e), flush=True)
+        pn = prev.get('national') or {}
+        offcn = {
+            'asof': prev.get('asof', ''),
+            'article_url': (prev.get('sources') or {}).get('offcn', ''),
+            'article_title': '',
+            'national': {k: pn.get(k) for k in
+                         ('apply', 'pass', 'pend', 'zero_positions', 'low_positions')},
+            'provinces': prev.get('provinces') or [],
+            'dept_top': prev.get('dept_top') or [],
+            'pos_apply_top': prev.get('pos_apply_top') or [],
+            'pos_ratio_top': prev.get('pos_ratio_top') or [],
+            'attrs': prev.get('attrs') or [],
+            'categories': prev.get('categories') or [],
+            'degrees': prev.get('degrees') or [],
+        }
     n = offcn['national']
-    print(f"   截至{offcn['asof']}: 报考{n['apply']} 过审{n['pass']} 待审{n['pend']} "
-          f"无人报考{n['zero_positions']}", flush=True)
+    print(f"   截至{offcn.get('asof', '')}: 报考{n.get('apply')} 过审{n.get('pass')} "
+          f"待审{n.get('pend')} 无人报考{n.get('zero_positions')}", flush=True)
     print(f"   省表{len(offcn['provinces'])} 部门Top{len(offcn['dept_top'])} "
           f"职位Top{len(offcn['pos_apply_top'])}/{len(offcn['pos_ratio_top'])} "
           f"属性{len(offcn['attrs'])} 类别{len(offcn['categories'])} 学历{len(offcn['degrees'])}",
@@ -672,8 +696,16 @@ def main():
         min_apply_top, min_ratio_top = [], []
 
     print('== 2. 华图省级/市级 ==', flush=True)
-    ht_prov = scrape_huatu_provinces(session)
-    cities, prov_hot = scrape_huatu_cities()
+    huatu_ok = False
+    try:
+        ht_prov = scrape_huatu_provinces(session)
+        cities, prov_hot = scrape_huatu_cities()
+        huatu_ok = bool(ht_prov) or any(cities.values())
+    except Exception as e:  # noqa
+        print('   华图数据抓取失败，市县数据沿用最近快照:', repr(e), flush=True)
+        ht_prov = prev.get('huatu_provinces') or []
+        cities = prev.get('cities') or {}
+        prov_hot = prev.get('prov_hot') or {}
     city_cnt = sum(len(v) for v in cities.values())
     hot_cnt = sum(len(v) for v in prov_hot.values())
     print(f'   省表{len(ht_prov)} 市级/区县记录 {city_cnt} 各省热门职位 {hot_cnt}', flush=True)
@@ -686,11 +718,18 @@ def main():
         prov_ratio_high, prov_ratio_low, prov_min_apply = {}, {}, {}
 
     print('== 3. 我的条件职位池 ==', flush=True)
+    pool_ok = False
     try:
         profile_pool = scrape_profile_pool(session)
+        pool_ok = bool(profile_pool)
     except Exception as e:  # noqa
         print('   画像职位池抓取失败:', repr(e), flush=True)
         profile_pool = []
+
+    # 所有数据源均不可达时(如云端被全部WAF拦截)不写快照, 保留线上现有数据
+    if not (offcn_ok or huatu_ok or pool_ok):
+        print('!! 所有数据源均不可达，本次跳过不生成数据', flush=True)
+        return
 
     # 2027 招考总量(静态)
     total_positions = sum(p['positions'] for p in offcn['provinces']) or 19426
@@ -729,8 +768,7 @@ def main():
         'degrees': offcn['degrees'],
     }
 
-    # 当日汇总文缺完整表/总数时, 沿用上一快照对应字段, 避免覆盖为空
-    prev = load_prev_snapshot()
+    # 当日汇总文缺完整表/总数或某数据源被拦截时, 沿用上一快照对应字段, 避免覆盖为空
     if prev:
         for k in ('apply', 'pass', 'pend', 'zero_positions', 'low_positions'):
             if not nat.get(k):
@@ -738,16 +776,19 @@ def main():
         if not payload['asof']:
             payload['asof'] = prev.get('asof') or ''
         for key in ('provinces', 'dept_top', 'pos_apply_top', 'pos_ratio_top',
-                    'min_apply_top', 'min_ratio_top', 'attrs', 'categories', 'degrees'):
+                    'min_apply_top', 'min_ratio_top', 'attrs', 'categories', 'degrees',
+                    'huatu_provinces', 'prov_hot', 'profile_pool'):
             if not payload[key]:
                 payload[key] = prev.get(key) or []
+        for key in ('cities', 'prov_ratio_high', 'prov_ratio_low', 'prov_min_apply'):
+            if not payload[key]:
+                payload[key] = prev.get(key) or {}
         total_positions = sum(p['positions'] for p in payload['provinces']) or 19426
         total_plan = sum(p['plan'] for p in payload['provinces']) or 35691
         nat['avg_ratio'] = round(nat['apply'] / total_plan, 2) if nat.get('apply') else None
         nat['approve_rate'] = (round(nat['pass'] / nat['apply'] * 100, 1)
                                if nat.get('apply') and nat.get('pass') else None)
-        if any(payload[k] for k in ('provinces', 'dept_top')):
-            print('   (部分字段沿用上一快照)', flush=True)
+        print('   (缺失字段已沿用上一快照)', flush=True)
 
     snap = os.path.join(OUTDIR, f'snap_{ts}.json')
     with open(snap, 'w', encoding='utf-8') as f:

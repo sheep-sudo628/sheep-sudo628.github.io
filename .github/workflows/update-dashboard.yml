@@ -33,27 +33,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests pandas lxml html5lib openpyxl
 
-      - name: 数据源可达性探测
-        run: |
-          python - <<'PY'
-          import requests
-          H={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36','Accept-Language':'zh-CN,zh;q=0.9'}
-          urls=[
-           'http://m.offcn.com/gjgwy/kaoshi/4034/',
-           'https://zw.offcn.com/gj/zwph/2027_bmrs_qb_qb_qb_asc.html',
-           'https://ah.huatu.com/zw/bmrs/2027.html',
-           'https://ah.huatu.com/zw/anhui/renshu/',
-          ]
-          for u in urls:
-              try:
-                  r=requests.get(u,headers=H,timeout=15)
-                  print('PROBE', r.status_code, len(r.content), u, flush=True)
-              except Exception as e:
-                  print('PROBE ERR', repr(e), u, flush=True)
-          PY
-
       - name: 抓取 2027 国考报名数据（中公全国汇总 + 华图市县 + 我的条件职位池）
         run: python scrape_2027.py
+        env:
+          # 中公系域名对云端 IP 返回 403，脚本会自动跳过并沿用上一快照，仅更新可访问的华图数据
+          PYTHONIOENCODING: utf-8
 
       - name: 抓取职位排行数据（失败不阻断主看板更新）
         continue-on-error: true
@@ -67,10 +51,18 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase -X theirs origin main || true
+          # 历史快照只保留最新一份，避免定时任务撑大仓库（最新快照仍可供下次兜底）
+          ls -t data/bmrs27/snap_*.json 2>/dev/null | tail -n +2 | xargs -r rm -f
+          ls -t data/bmrs/*.json.gz 2>/dev/null | tail -n +2 | xargs -r rm -f
           git add -A
           if git diff --cached --quiet; then
             echo "数据源暂无新内容，本次跳过提交"
           else
-            git commit -m "自动更新：$(date -u +'%Y-%m-%d %H:%M UTC') 抓取数据"
-            git push
+            git commit -m "自动更新：$(date -u +'%Y-%m-%d %H:%M UTC') 云端抓取"
+            for i in 1 2 3; do
+              if git push; then break; fi
+              git pull --rebase -X theirs origin main
+              sleep 5
+            done
           fi
