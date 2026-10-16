@@ -20,34 +20,52 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      # 报名期(10/15-10/24)结束后，定时触发自动跳过全部步骤；手动触发不受影响
+      - name: 报名期闸门
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%m%d)" -gt 1024 ]; then
+            echo "active=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::报名已截止(10月24日)，云端定时更新自动停用"
+          else
+            echo "active=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 检出仓库
+        if: steps.gate.outputs.active == 'true'
         uses: actions/checkout@v4
 
       - name: 安装 Python
+        if: steps.gate.outputs.active == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: 安装依赖
+        if: steps.gate.outputs.active == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install requests pandas lxml html5lib openpyxl
 
       - name: 抓取 2027 国考报名数据（中公全国汇总 + 华图市县 + 我的条件职位池）
+        if: steps.gate.outputs.active == 'true'
         run: python scrape_2027.py
         env:
           # 中公系域名对云端 IP 返回 403，脚本会自动跳过并沿用上一快照，仅更新可访问的华图数据
           PYTHONIOENCODING: utf-8
 
       - name: 抓取职位排行数据（失败不阻断主看板更新）
+        if: steps.gate.outputs.active == 'true'
         continue-on-error: true
         run: python scrape_bmrs.py
 
       # 主看板始终与根入口 index.html 保持一致
       - name: 同步根入口
+        if: steps.gate.outputs.active == 'true'
         run: cp -f "2027国考报名实时看板.html" index.html
 
       - name: 有新数据则提交并推送（Pages 自动重建）
+        if: steps.gate.outputs.active == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -65,4 +83,3 @@ jobs:
               git pull --rebase -X theirs origin main
               sleep 5
             done
-          fi
